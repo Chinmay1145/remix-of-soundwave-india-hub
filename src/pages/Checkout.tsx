@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -10,7 +10,8 @@ import {
   Lock, 
   Shield, 
   Truck,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,7 @@ const Checkout = () => {
   const [selectedPayment, setSelectedPayment] = useState('upi');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [profileLoaded, setProfileLoaded] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -58,6 +60,32 @@ const Checkout = () => {
     state: '',
     pincode: '',
   });
+
+  // Auto-fill from profile
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user || profileLoaded) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, phone, address, city, state, pincode')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        setFormData(prev => ({
+          name: data.full_name || prev.name,
+          email: user.email || prev.email,
+          phone: data.phone || prev.phone,
+          address: data.address || prev.address,
+          city: data.city || prev.city,
+          state: data.state || prev.state,
+          pincode: data.pincode || prev.pincode,
+        }));
+      }
+      setProfileLoaded(true);
+    };
+    loadProfile();
+  }, [user, profileLoaded]);
 
   const subtotal = getTotal();
   const shipping = subtotal > 999 ? 0 : 99;
@@ -107,7 +135,6 @@ const Checkout = () => {
     try {
       const orderNumber = generateOrderNumber();
 
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -133,7 +160,6 @@ const Checkout = () => {
 
       if (orderError) throw orderError;
 
-      // Create order items
       const orderItems = items.map(item => ({
         order_id: order.id,
         product_id: item.id,
@@ -149,7 +175,6 @@ const Checkout = () => {
 
       if (itemsError) throw itemsError;
 
-      // Create initial tracking entry
       await supabase
         .from('order_tracking')
         .insert({
@@ -159,8 +184,14 @@ const Checkout = () => {
           location: 'Warehouse',
         });
 
-      // Clear cart and navigate to success
+      // Clear cart after successful order
       clearCart();
+      
+      // Also sync cleared cart to database
+      if (user) {
+        await supabase.from('cart_items').delete().eq('user_id', user.id);
+      }
+
       navigate(`/order-success/${orderNumber}`);
     } catch (error) {
       console.error('Checkout error:', error);
@@ -212,7 +243,6 @@ const Checkout = () => {
 
           <form onSubmit={handleSubmit}>
             <div className="grid lg:grid-cols-3 gap-8">
-              {/* Left Column - Forms */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Shipping Information */}
                 <motion.div
@@ -234,7 +264,7 @@ const Checkout = () => {
                         value={formData.name}
                         onChange={handleInputChange}
                         placeholder="John Doe"
-                        className={errors.name ? 'border-destructive' : ''}
+                        className={`h-11 ${errors.name ? 'border-destructive' : ''}`}
                       />
                       {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
                     </div>
@@ -248,7 +278,7 @@ const Checkout = () => {
                         value={formData.email}
                         onChange={handleInputChange}
                         placeholder="john@example.com"
-                        className={errors.email ? 'border-destructive' : ''}
+                        className={`h-11 ${errors.email ? 'border-destructive' : ''}`}
                       />
                       {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
                     </div>
@@ -261,7 +291,7 @@ const Checkout = () => {
                         value={formData.phone}
                         onChange={handleInputChange}
                         placeholder="+91 9876543210"
-                        className={errors.phone ? 'border-destructive' : ''}
+                        className={`h-11 ${errors.phone ? 'border-destructive' : ''}`}
                       />
                       {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone}</p>}
                     </div>
@@ -274,7 +304,7 @@ const Checkout = () => {
                         value={formData.address}
                         onChange={handleInputChange}
                         placeholder="House/Flat No., Street, Locality"
-                        className={errors.address ? 'border-destructive' : ''}
+                        className={`h-11 ${errors.address ? 'border-destructive' : ''}`}
                       />
                       {errors.address && <p className="text-destructive text-sm mt-1">{errors.address}</p>}
                     </div>
@@ -287,7 +317,7 @@ const Checkout = () => {
                         value={formData.city}
                         onChange={handleInputChange}
                         placeholder="Mumbai"
-                        className={errors.city ? 'border-destructive' : ''}
+                        className={`h-11 ${errors.city ? 'border-destructive' : ''}`}
                       />
                       {errors.city && <p className="text-destructive text-sm mt-1">{errors.city}</p>}
                     </div>
@@ -300,7 +330,7 @@ const Checkout = () => {
                         value={formData.state}
                         onChange={handleInputChange}
                         placeholder="Maharashtra"
-                        className={errors.state ? 'border-destructive' : ''}
+                        className={`h-11 ${errors.state ? 'border-destructive' : ''}`}
                       />
                       {errors.state && <p className="text-destructive text-sm mt-1">{errors.state}</p>}
                     </div>
@@ -313,7 +343,7 @@ const Checkout = () => {
                         value={formData.pincode}
                         onChange={handleInputChange}
                         placeholder="400001"
-                        className={errors.pincode ? 'border-destructive' : ''}
+                        className={`h-11 ${errors.pincode ? 'border-destructive' : ''}`}
                       />
                       {errors.pincode && <p className="text-destructive text-sm mt-1">{errors.pincode}</p>}
                     </div>
@@ -368,7 +398,7 @@ const Checkout = () => {
                 </motion.div>
               </div>
 
-              {/* Right Column - Order Summary */}
+              {/* Order Summary */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -377,16 +407,11 @@ const Checkout = () => {
                 <div className="bg-card rounded-2xl border border-border p-6 sticky top-28">
                   <h2 className="font-display text-xl font-bold mb-6">Order Summary</h2>
 
-                  {/* Cart Items */}
                   <div className="space-y-4 mb-6 max-h-60 overflow-y-auto">
                     {items.map((item) => (
                       <div key={item.id} className="flex gap-3">
                         <div className="w-16 h-16 rounded-lg bg-secondary overflow-hidden flex-shrink-0">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-contain p-1"
-                          />
+                          <img src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm line-clamp-1">{item.name}</p>
@@ -397,7 +422,6 @@ const Checkout = () => {
                     ))}
                   </div>
 
-                  {/* Summary Lines */}
                   <div className="space-y-3 mb-6 border-t border-border pt-4">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
@@ -422,20 +446,10 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  <Button
-                    type="submit"
-                    variant="hero"
-                    className="w-full"
-                    size="lg"
-                    disabled={isProcessing}
-                  >
+                  <Button type="submit" variant="hero" className="w-full" size="lg" disabled={isProcessing}>
                     {isProcessing ? (
                       <span className="flex items-center gap-2">
-                        <motion.span
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                          className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
-                        />
+                        <Loader2 className="w-5 h-5 animate-spin" />
                         Processing...
                       </span>
                     ) : (
@@ -446,7 +460,6 @@ const Checkout = () => {
                     )}
                   </Button>
 
-                  {/* Trust Badges */}
                   <div className="flex flex-col gap-2 mt-6 text-muted-foreground text-xs">
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-primary" />
