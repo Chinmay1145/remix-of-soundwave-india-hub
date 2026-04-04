@@ -26,7 +26,6 @@ const Header = () => {
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const { user, signOut } = useAuth();
 
-  // Sync stores with database when user is logged in
   useSyncStores();
 
   useEffect(() => {
@@ -41,7 +40,6 @@ const Header = () => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
-  // Keyboard shortcut for search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -77,7 +75,6 @@ const Header = () => {
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <motion.div
               whileHover={{ rotate: 360 }}
@@ -91,7 +88,6 @@ const Header = () => {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
@@ -112,7 +108,6 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Actions */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Button
@@ -125,36 +120,43 @@ const Header = () => {
             </Button>
 
             <Link to="/wishlist">
-              <Button variant="ghost" size="icon" className="relative">
-                <Heart className="w-5 h-5" />
-                {wishlistCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center"
-                  >
-                    {wishlistCount}
-                  </motion.span>
-                )}
+              <Button variant="ghost" size="icon" className="relative group">
+                <Heart className="w-5 h-5 group-hover:text-pink-500 transition-colors" />
+                <AnimatePresence>
+                  {wishlistCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-pink-500 to-rose-600 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg shadow-pink-500/30"
+                    >
+                      {wishlistCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </Button>
             </Link>
 
             <Link to="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="w-5 h-5" />
-                {cartItemCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center"
-                  >
-                    {cartItemCount}
-                  </motion.span>
-                )}
+              <Button variant="ghost" size="icon" className="relative group">
+                <ShoppingCart className="w-5 h-5 group-hover:text-primary transition-colors" />
+                <AnimatePresence>
+                  {cartItemCount > 0 && (
+                    <motion.span
+                      key={cartItemCount}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                      className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs rounded-full flex items-center justify-center font-bold shadow-lg shadow-primary/30"
+                    >
+                      {cartItemCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </Button>
             </Link>
 
-            {/* User Account */}
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -168,24 +170,15 @@ const Header = () => {
                     <p className="text-xs text-muted-foreground">Logged in</p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => navigate('/profile')}
-                    className="cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
                     <User className="w-4 h-4 mr-2" />
                     My Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => navigate('/my-orders')}
-                    className="cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={() => navigate('/my-orders')} className="cursor-pointer">
                     <Package className="w-4 h-4 mr-2" />
                     My Orders
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => navigate('/wishlist')}
-                    className="cursor-pointer"
-                  >
+                  <DropdownMenuItem onClick={() => navigate('/wishlist')} className="cursor-pointer">
                     <Heart className="w-4 h-4 mr-2" />
                     Wishlist
                   </DropdownMenuItem>
@@ -219,7 +212,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -245,7 +237,6 @@ const Header = () => {
         )}
       </AnimatePresence>
 
-      {/* Search Dialog */}
       <SearchDialog open={isSearchOpen} onOpenChange={setIsSearchOpen} />
     </header>
   );

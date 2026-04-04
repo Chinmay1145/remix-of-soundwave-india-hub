@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Save, ChevronLeft, Loader2, ShoppingBag, Heart, Shield, LogOut } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, ChevronLeft, Loader2, ShoppingBag, Heart, Shield, LogOut, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,14 +58,33 @@ const Profile = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from('profiles').update(profile).eq('user_id', user.id);
-    if (error) {
-      if (error.code === 'PGRST116') {
-        const { error: insertErr } = await supabase.from('profiles').insert({ user_id: user.id, ...profile });
-        if (insertErr) toast.error('Failed to save profile');
-        else toast.success('Profile saved successfully!');
-      } else {
+    
+    // Try update first
+    const { data: updateData, error: updateError } = await supabase
+      .from('profiles')
+      .update(profile)
+      .eq('user_id', user.id)
+      .select();
+
+    if (updateError) {
+      // If update fails, try insert
+      const { error: insertErr } = await supabase
+        .from('profiles')
+        .insert({ user_id: user.id, ...profile });
+      if (insertErr) {
         toast.error('Failed to save profile');
+      } else {
+        toast.success('Profile saved successfully!');
+      }
+    } else if (!updateData || updateData.length === 0) {
+      // No row was updated (doesn't exist yet), insert instead
+      const { error: insertErr } = await supabase
+        .from('profiles')
+        .insert({ user_id: user.id, ...profile });
+      if (insertErr) {
+        toast.error('Failed to save profile');
+      } else {
+        toast.success('Profile saved successfully!');
       }
     } else {
       toast.success('Profile saved successfully!');
