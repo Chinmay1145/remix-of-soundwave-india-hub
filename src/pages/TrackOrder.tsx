@@ -188,9 +188,9 @@ const TrackOrder = () => {
   const handleDownloadInvoice = () => {
     setShowInvoice(true);
     setTimeout(() => {
-      const downloadBtn = document.querySelector('[data-download]') as HTMLButtonElement;
-      downloadBtn?.click();
-    }, 400);
+      const btn = document.querySelector('[data-download]') as HTMLButtonElement;
+      btn?.click();
+    }, 500);
   };
 
   return (
