@@ -2,6 +2,8 @@ import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Download, X, Headphones, FileText, Shield, Calendar, CreditCard, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface OrderItem {
   product_name: string;
@@ -46,150 +48,149 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
 
   const formattedDate = new Date(data.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const handleDownload = () => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Header
+    doc.setFillColor(232, 65, 24);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SoundWave', 14, 22);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Premium Audio Store', 14, 30);
+    
+    doc.setFontSize(28);
+    doc.setFont('helvetica', 'bold');
+    doc.text('INVOICE', pageWidth - 14, 22, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(data.orderNumber, pageWidth - 14, 30, { align: 'right' });
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Invoice - ${data.orderNumber}</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #fff; color: #1a1a2e; padding: 40px; }
-          .invoice { max-width: 800px; margin: 0 auto; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 3px solid #e84118; }
-          .logo { display: flex; align-items: center; gap: 12px; }
-          .logo-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #e84118, #ff9f43); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; }
-          .logo-text { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
-          .logo-text span { color: #e84118; }
-          .logo-sub { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-top: 2px; }
-          .invoice-title { text-align: right; }
-          .invoice-title h1 { font-size: 40px; font-weight: 900; color: #e84118; letter-spacing: 3px; line-height: 1; }
-          .invoice-title .meta { margin-top: 8px; }
-          .invoice-title .meta p { font-size: 13px; color: #666; line-height: 1.6; }
-          .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-          .meta-card { background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #eee; }
-          .meta-card h3 { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #e84118; margin-bottom: 10px; font-weight: 700; }
-          .meta-card p { font-size: 13px; line-height: 1.7; color: #444; }
-          .meta-card p strong { color: #1a1a2e; }
-          .payment-badge { display: inline-block; background: #e84118; color: white; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-          table { width: 100%; border-collapse: collapse; margin: 24px 0; border-radius: 12px; overflow: hidden; }
-          thead th { background: linear-gradient(135deg, #1a1a2e, #2d2d4e); color: white; padding: 14px 18px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
-          thead th:last-child, thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
-          tbody td { padding: 16px 18px; border-bottom: 1px solid #f0f0f0; font-size: 13px; color: #333; }
-          tbody td:last-child, tbody td:nth-child(3), tbody td:nth-child(4) { text-align: right; }
-          tbody td:last-child { font-weight: 700; color: #1a1a2e; }
-          tbody tr:last-child td { border-bottom: none; }
-          tbody tr:nth-child(even) { background: #fafafa; }
-          .summary-section { display: flex; justify-content: flex-end; margin-top: 8px; }
-          .summary-table { width: 320px; background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #eee; }
-          .summary-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #666; }
-          .summary-row.discount { color: #e84118; }
-          .summary-row.total { border-top: 2px solid #1a1a2e; margin-top: 10px; padding-top: 14px; font-size: 22px; font-weight: 900; color: #1a1a2e; }
-          .gst-banner { background: linear-gradient(135deg, #fff5f0, #fff0e8); border: 1px solid #fdd; border-radius: 12px; padding: 16px 20px; margin-top: 24px; display: flex; align-items: center; gap: 12px; }
-          .gst-icon { width: 36px; height: 36px; background: #e84118; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; flex-shrink: 0; }
-          .gst-text { font-size: 12px; color: #666; line-height: 1.5; }
-          .gst-text strong { color: #333; }
-          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
-          .footer p { font-size: 11px; color: #999; line-height: 1.8; }
-          .footer .brand { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
-          .footer .brand span { color: #e84118; }
-          @media print { body { padding: 20px; } }
-        </style>
-      </head>
-      <body>
-        <div class="invoice">
-          <div class="header">
-            <div class="logo">
-              <div class="logo-icon">🎧</div>
-              <div>
-                <div class="logo-text">Sound<span>Wave</span></div>
-                <div class="logo-sub">Premium Audio Store</div>
-              </div>
-            </div>
-            <div class="invoice-title">
-              <h1>INVOICE</h1>
-              <div class="meta">
-                <p><strong>${data.orderNumber}</strong></p>
-                <p>${formattedDate}</p>
-              </div>
-            </div>
-          </div>
+    // Order info
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(10);
+    let y = 52;
+    doc.text(`Date: ${formattedDate}`, 14, y);
+    doc.text(`Payment: ${data.paymentMethod.toUpperCase()}`, pageWidth - 14, y, { align: 'right' });
 
-          <div class="meta-grid">
-            <div class="meta-card">
-              <h3>Billed To</h3>
-              <p><strong>${data.customerName}</strong></p>
-              <p>${data.shippingAddress}</p>
-              <p>${data.city}, ${data.state} - ${data.pincode}</p>
-              <p>${data.customerEmail}</p>
-              <p>${data.customerPhone}</p>
-            </div>
-            <div class="meta-card">
-              <h3>From</h3>
-              <p><strong>SoundWave India Pvt. Ltd.</strong></p>
-              <p>123 Audio Street, Tech Park</p>
-              <p>Mumbai, Maharashtra - 400001</p>
-              <p>GSTIN: 27AABCS1234R1ZP</p>
-              <p>support@soundwave.in</p>
-              <p style="margin-top: 8px;"><span class="payment-badge">${data.paymentMethod.toUpperCase()}</span></p>
-            </div>
-          </div>
+    // Billed To / From
+    y = 65;
+    doc.setTextColor(232, 65, 24);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('BILLED TO', 14, y);
+    doc.text('FROM', pageWidth / 2 + 10, y);
 
-          <table>
-            <thead>
-              <tr>
-                <th style="width:40px">#</th>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.items.map((item, i) => `
-                <tr>
-                  <td>${i + 1}</td>
-                  <td><strong>${item.product_name}</strong></td>
-                  <td>${item.quantity}</td>
-                  <td>₹${item.price.toLocaleString()}</td>
-                  <td>₹${(item.price * item.quantity).toLocaleString()}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+    y = 73;
+    doc.setTextColor(50, 50, 50);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text(data.customerName, 14, y);
+    doc.text('SoundWave India Pvt. Ltd.', pageWidth / 2 + 10, y);
 
-          <div class="summary-section">
-            <div class="summary-table">
-              <div class="summary-row"><span>Subtotal (excl. GST)</span><span>₹${baseAmount.toLocaleString()}</span></div>
-              <div class="summary-row"><span>CGST (9%)</span><span>₹${cgst.toLocaleString()}</span></div>
-              <div class="summary-row"><span>SGST (9%)</span><span>₹${sgst.toLocaleString()}</span></div>
-              <div class="summary-row"><span>Shipping</span><span>${data.shipping === 0 ? 'FREE' : '₹' + data.shipping}</span></div>
-              ${data.discount > 0 ? `<div class="summary-row discount"><span>Discount</span><span>-₹${data.discount.toLocaleString()}</span></div>` : ''}
-              <div class="summary-row total"><span>Total</span><span>₹${data.total.toLocaleString()}</span></div>
-            </div>
-          </div>
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    const leftLines = [
+      data.shippingAddress,
+      `${data.city}, ${data.state} - ${data.pincode}`,
+      data.customerEmail,
+      data.customerPhone,
+    ];
+    const rightLines = [
+      '123 Audio Street, Tech Park',
+      'Mumbai, Maharashtra - 400001',
+      'GSTIN: 27AABCS1234R1ZP',
+      'support@soundwave.in',
+    ];
+    leftLines.forEach((line, i) => doc.text(line, 14, y + 7 + i * 5));
+    rightLines.forEach((line, i) => doc.text(line, pageWidth / 2 + 10, y + 7 + i * 5));
 
-          <div class="gst-banner">
-            <div class="gst-icon">🛡</div>
-            <div class="gst-text">
-              <strong>GST Summary:</strong> Total GST ₹${gstAmount.toLocaleString()} (CGST: ₹${cgst.toLocaleString()} + SGST: ₹${sgst.toLocaleString()}) included in total. GSTIN: 27AABCS1234R1ZP
-            </div>
-          </div>
+    // Items table
+    y = 108;
+    autoTable(doc, {
+      startY: y,
+      head: [['#', 'Product', 'Qty', 'Unit Price', 'Amount']],
+      body: data.items.map((item, i) => [
+        (i + 1).toString(),
+        item.product_name,
+        item.quantity.toString(),
+        `Rs.${item.price.toLocaleString()}`,
+        `Rs.${(item.price * item.quantity).toLocaleString()}`,
+      ]),
+      headStyles: {
+        fillColor: [26, 26, 46],
+        textColor: [255, 255, 255],
+        fontSize: 9,
+        fontStyle: 'bold',
+      },
+      bodyStyles: { fontSize: 9, textColor: [50, 50, 50] },
+      alternateRowStyles: { fillColor: [248, 249, 250] },
+      columnStyles: {
+        0: { cellWidth: 12 },
+        2: { halign: 'center', cellWidth: 16 },
+        3: { halign: 'right', cellWidth: 30 },
+        4: { halign: 'right', cellWidth: 30, fontStyle: 'bold' },
+      },
+      margin: { left: 14, right: 14 },
+    });
 
-          <div class="footer">
-            <p class="brand">Sound<span>Wave</span></p>
-            <p>Thank you for shopping with SoundWave! 🎵</p>
-            <p>This is a computer-generated invoice and does not require a signature.</p>
-          </div>
-        </div>
-        <script>window.onload = function() { window.print(); }<\/script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+    // Summary
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const summaryX = pageWidth - 90;
+    const summaryLines = [
+      ['Subtotal (excl. GST)', `Rs.${baseAmount.toLocaleString()}`],
+      ['CGST (9%)', `Rs.${cgst.toLocaleString()}`],
+      ['SGST (9%)', `Rs.${sgst.toLocaleString()}`],
+      ['Shipping', data.shipping === 0 ? 'FREE' : `Rs.${data.shipping}`],
+    ];
+    if (data.discount > 0) {
+      summaryLines.push(['Discount', `-Rs.${data.discount.toLocaleString()}`]);
+    }
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    summaryLines.forEach((line, i) => {
+      doc.text(line[0], summaryX, finalY + i * 7);
+      doc.text(line[1], pageWidth - 14, finalY + i * 7, { align: 'right' });
+    });
+
+    const totalY = finalY + summaryLines.length * 7 + 4;
+    doc.setDrawColor(26, 26, 46);
+    doc.line(summaryX, totalY - 3, pageWidth - 14, totalY - 3);
+    doc.setTextColor(26, 26, 46);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total', summaryX, totalY + 4);
+    doc.text(`Rs.${data.total.toLocaleString()}`, pageWidth - 14, totalY + 4, { align: 'right' });
+
+    // GST Banner
+    const gstY = totalY + 18;
+    doc.setFillColor(255, 245, 240);
+    doc.roundedRect(14, gstY, pageWidth - 28, 14, 3, 3, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      `GST Summary: Total GST Rs.${gstAmount.toLocaleString()} (CGST: Rs.${cgst.toLocaleString()} + SGST: Rs.${sgst.toLocaleString()}) | GSTIN: 27AABCS1234R1ZP`,
+      pageWidth / 2,
+      gstY + 9,
+      { align: 'center' }
+    );
+
+    // Footer
+    const footerY = gstY + 26;
+    doc.setTextColor(150, 150, 150);
+    doc.setFontSize(9);
+    doc.text('Thank you for shopping with SoundWave!', pageWidth / 2, footerY, { align: 'center' });
+    doc.setFontSize(7);
+    doc.text('This is a computer-generated invoice and does not require a signature.', pageWidth / 2, footerY + 6, { align: 'center' });
+
+    doc.save(`Invoice_${data.orderNumber}.pdf`);
   };
 
   if (!showPreview) return null;
@@ -220,7 +221,7 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="glow" size="sm" onClick={handleDownload} data-download>
+            <Button variant="glow" size="sm" onClick={generatePDF} data-download>
               <Download className="w-4 h-4 mr-2" />
               Download PDF
             </Button>
@@ -230,9 +231,8 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
           </div>
         </div>
 
-        {/* Invoice Content */}
+        {/* Invoice Content Preview */}
         <div ref={invoiceRef} className="p-8">
-          {/* Invoice Header */}
           <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-primary">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
@@ -252,7 +252,6 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
             </div>
           </div>
 
-          {/* Info Cards */}
           <div className="grid grid-cols-2 gap-6 mb-8">
             <div className="bg-secondary/50 rounded-xl p-5 border border-border/50">
               <h4 className="text-[10px] uppercase tracking-[2px] text-primary font-bold mb-3 flex items-center gap-1.5">
@@ -283,7 +282,6 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
             </div>
           </div>
 
-          {/* Items Table */}
           <div className="rounded-xl border border-border overflow-hidden mb-6">
             <table className="w-full">
               <thead>
@@ -309,7 +307,6 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
             </table>
           </div>
 
-          {/* Summary */}
           <div className="flex justify-end">
             <div className="w-80 bg-secondary/50 rounded-xl p-5 border border-border/50 space-y-2">
               <div className="flex justify-between text-sm text-muted-foreground">
@@ -341,7 +338,6 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
             </div>
           </div>
 
-          {/* GST Info */}
           <div className="mt-6 p-4 bg-primary/5 rounded-xl border border-primary/20 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Shield className="w-4 h-4 text-primary" />
@@ -351,13 +347,12 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
             </p>
           </div>
 
-          {/* Footer */}
-          <div className="mt-8 text-center space-y-1">
+          <div className="mt-8 text-center border-t border-border pt-6">
             <p className="font-display text-sm font-bold">
               Sound<span className="text-primary">Wave</span>
             </p>
-            <p className="text-xs text-muted-foreground">Thank you for shopping with SoundWave! 🎵</p>
-            <p className="text-[10px] text-muted-foreground/60">This is a computer-generated invoice and does not require a signature.</p>
+            <p className="text-xs text-muted-foreground mt-1">Thank you for shopping with SoundWave! 🎵</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Computer-generated invoice — no signature required</p>
           </div>
         </div>
       </motion.div>
