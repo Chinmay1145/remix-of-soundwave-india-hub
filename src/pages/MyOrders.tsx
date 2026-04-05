@@ -71,6 +71,14 @@ const MyOrders = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [simulatingOrderId, setSimulatingOrderId] = useState<string | null>(null);
+
+  const simulationData = [
+    { status: 'processing', description: 'Order is being packed at the warehouse', location: 'Mumbai Warehouse' },
+    { status: 'shipped', description: 'Package has been handed to courier partner', location: 'Mumbai Hub' },
+    { status: 'out_for_delivery', description: 'Package is out for delivery in your area', location: 'Local Delivery Hub' },
+    { status: 'delivered', description: 'Package has been delivered successfully', location: 'Delivered' },
+  ];
 
   useEffect(() => {
     if (!authLoading && !user) {
