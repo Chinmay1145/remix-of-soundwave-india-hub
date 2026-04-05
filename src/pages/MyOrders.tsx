@@ -163,6 +163,49 @@ const MyOrders = () => {
     setShowInvoicePreview(true);
   };
 
+  const handleSimulateNext = async (order: Order) => {
+    const currentIdx = statusSteps.indexOf(order.order_status);
+    if (order.order_status === 'delivered') {
+      toast.info('Order is already delivered!');
+      return;
+    }
+    const nextStep = simulationData[currentIdx];
+    if (!nextStep) {
+      toast.info('Order is already delivered!');
+      return;
+    }
+
+    setSimulatingOrderId(order.id);
+    try {
+      const { error } = await supabase.from('order_tracking').insert({
+        order_id: order.id,
+        status: nextStep.status,
+        description: nextStep.description,
+        location: nextStep.location,
+      });
+      if (error) throw error;
+
+      // Refresh this order's tracking inline without full page reload
+      const { data: newTracking } = await supabase
+        .from('order_tracking')
+        .select('*')
+        .eq('order_id', order.id)
+        .order('created_at', { ascending: true });
+
+      setOrders(prev => prev.map(o =>
+        o.id === order.id
+          ? { ...o, order_status: nextStep.status, tracking: newTracking || o.tracking }
+          : o
+      ));
+      toast.success(`Order updated to: ${nextStep.status.replace(/_/g, ' ')}`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update status');
+    } finally {
+      setSimulatingOrderId(null);
+    }
+  };
+
   const tabs = [
     { key: 'all', label: 'All Orders', count: orderCounts.all },
     { key: 'confirmed', label: 'Confirmed', count: orderCounts.confirmed },
