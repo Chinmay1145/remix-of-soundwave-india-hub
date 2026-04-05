@@ -606,6 +606,22 @@ const MyOrders = () => {
 
                             {/* Actions */}
                             <div className="flex flex-wrap gap-3 pt-2">
+                              {order.order_status !== 'delivered' && order.order_status !== 'cancelled' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSimulateNext(order)}
+                                  disabled={simulatingOrderId === order.id}
+                                  className="border-primary/30 hover:bg-primary/10"
+                                >
+                                  {simulatingOrderId === order.id ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Play className="w-4 h-4 mr-2" />
+                                  )}
+                                  Advance to {simulationData[statusSteps.indexOf(order.order_status)]?.status.replace(/_/g, ' ') || 'next'}
+                                </Button>
+                              )}
                               <Button variant="outline" size="sm" onClick={() => {
                                 navigator.clipboard.writeText(order.order_number);
                                 toast.success('Order number copied!');
