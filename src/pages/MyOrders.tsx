@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Truck, ChevronDown, Search, Calendar, MapPin, ShoppingBag, Download, Eye, FileText, Loader2, CheckCircle2, Home, Clock, XCircle, RefreshCw, IndianRupee } from 'lucide-react';
+import { Package, Truck, ChevronDown, Search, Calendar, MapPin, ShoppingBag, Download, Eye, FileText, Loader2, CheckCircle2, Home, Clock, XCircle, RefreshCw, IndianRupee, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -71,6 +71,14 @@ const MyOrders = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [simulatingOrderId, setSimulatingOrderId] = useState<string | null>(null);
+
+  const simulationData = [
+    { status: 'processing', description: 'Order is being packed at the warehouse', location: 'Mumbai Warehouse' },
+    { status: 'shipped', description: 'Package has been handed to courier partner', location: 'Mumbai Hub' },
+    { status: 'out_for_delivery', description: 'Package is out for delivery in your area', location: 'Local Delivery Hub' },
+    { status: 'delivered', description: 'Package has been delivered successfully', location: 'Delivered' },
+  ];
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -153,6 +161,49 @@ const MyOrders = () => {
   const handleViewInvoice = (order: Order) => {
     setInvoiceOrder(order);
     setShowInvoicePreview(true);
+  };
+
+  const handleSimulateNext = async (order: Order) => {
+    const currentIdx = statusSteps.indexOf(order.order_status);
+    if (order.order_status === 'delivered') {
+      toast.info('Order is already delivered!');
+      return;
+    }
+    const nextStep = simulationData[currentIdx];
+    if (!nextStep) {
+      toast.info('Order is already delivered!');
+      return;
+    }
+
+    setSimulatingOrderId(order.id);
+    try {
+      const { error } = await supabase.from('order_tracking').insert({
+        order_id: order.id,
+        status: nextStep.status,
+        description: nextStep.description,
+        location: nextStep.location,
+      });
+      if (error) throw error;
+
+      // Refresh this order's tracking inline without full page reload
+      const { data: newTracking } = await supabase
+        .from('order_tracking')
+        .select('*')
+        .eq('order_id', order.id)
+        .order('created_at', { ascending: true });
+
+      setOrders(prev => prev.map(o =>
+        o.id === order.id
+          ? { ...o, order_status: nextStep.status, tracking: newTracking || o.tracking }
+          : o
+      ));
+      toast.success(`Order updated to: ${nextStep.status.replace(/_/g, ' ')}`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update status');
+    } finally {
+      setSimulatingOrderId(null);
+    }
   };
 
   const tabs = [
@@ -555,6 +606,22 @@ const MyOrders = () => {
 
                             {/* Actions */}
                             <div className="flex flex-wrap gap-3 pt-2">
+                              {order.order_status !== 'delivered' && order.order_status !== 'cancelled' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSimulateNext(order)}
+                                  disabled={simulatingOrderId === order.id}
+                                  className="border-primary/30 hover:bg-primary/10"
+                                >
+                                  {simulatingOrderId === order.id ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Play className="w-4 h-4 mr-2" />
+                                  )}
+                                  Advance to {simulationData[statusSteps.indexOf(order.order_status)]?.status.replace(/_/g, ' ') || 'next'}
+                                </Button>
+                              )}
                               <Button variant="outline" size="sm" onClick={() => {
                                 navigator.clipboard.writeText(order.order_number);
                                 toast.success('Order number copied!');
