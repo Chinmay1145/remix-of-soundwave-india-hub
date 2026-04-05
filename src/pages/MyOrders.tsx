@@ -555,12 +555,13 @@ const MyOrders = () => {
 
                             {/* Actions */}
                             <div className="flex flex-wrap gap-3 pt-2">
-                              <Link to={`/track-order?order=${order.order_number}`}>
-                                <Button variant="outline" size="sm">
-                                  <Truck className="w-4 h-4 mr-2" />
-                                  Track Order
-                                </Button>
-                              </Link>
+                              <Button variant="outline" size="sm" onClick={() => {
+                                navigator.clipboard.writeText(order.order_number);
+                                toast.success('Order number copied!');
+                              }}>
+                                <FileText className="w-4 h-4 mr-2" />
+                                Copy Order #
+                              </Button>
                               <Button variant="outline" size="sm" onClick={() => handleViewInvoice(order)}>
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Invoice
