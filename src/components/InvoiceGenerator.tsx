@@ -193,7 +193,13 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
     doc.save(`Invoice_${data.orderNumber}.pdf`);
   };
 
-  if (!showPreview) return null;
+  if (!showPreview) {
+    return (
+      <button data-download-pdf onClick={generatePDF} style={{ display: 'none' }} aria-hidden="true">
+        Download
+      </button>
+    );
+  }
 
   return (
     <motion.div
