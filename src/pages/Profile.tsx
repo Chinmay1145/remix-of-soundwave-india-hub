@@ -192,7 +192,7 @@ const Profile = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="grid grid-cols-3 gap-3 mb-6"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"
           >
             {quickLinks.map((link) => (
               <button

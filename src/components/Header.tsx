@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Heart, Search, Menu, X, Headphones, User, LogOut, Package } from 'lucide-react';
+import { ShoppingCart, Heart, Search, Menu, X, Headphones, User, LogOut, Package, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { useAuth } from '@/hooks/useAuth';
@@ -177,6 +177,10 @@ const Header = () => {
                   <DropdownMenuItem onClick={() => navigate('/my-orders')} className="cursor-pointer">
                     <Package className="w-4 h-4 mr-2" />
                     My Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/reports')} className="cursor-pointer">
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Reports & Analytics
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/wishlist')} className="cursor-pointer">
                     <Heart className="w-4 h-4 mr-2" />
