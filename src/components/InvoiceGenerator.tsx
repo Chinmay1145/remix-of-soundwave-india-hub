@@ -147,13 +147,13 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
     y += 14;
     autoTable(doc, {
       startY: y,
-      head: [['#', 'Product', 'Qty', 'Unit Price', 'Amount']],
+      head: [['S.No', 'Product', 'Qty', 'Unit Price', 'Amount']],
       body: data.items.map((item, i) => [
-        (i + 1).toString(),
+        String(i + 1).padStart(2, '0'),
         item.product_name,
         item.quantity.toString(),
-        `Rs.${item.price.toLocaleString()}`,
-        `Rs.${(item.price * item.quantity).toLocaleString()}`,
+        `INR ${item.price.toLocaleString('en-IN')}`,
+        `INR ${(item.price * item.quantity).toLocaleString('en-IN')}`,
       ]),
       headStyles: {
         fillColor: [15, 23, 42],
@@ -187,13 +187,13 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
     // Summary card background
     doc.setFillColor(248, 250, 252);
     const summaryLines = [
-      ['Subtotal (excl. GST)', `Rs.${baseAmount.toLocaleString()}`],
-      ['CGST (9%)', `Rs.${cgst.toLocaleString()}`],
-      ['SGST (9%)', `Rs.${sgst.toLocaleString()}`],
-      ['Shipping', data.shipping === 0 ? 'FREE' : `Rs.${data.shipping}`],
+      ['Subtotal (excl. GST)', `INR ${baseAmount.toLocaleString('en-IN')}`],
+      ['CGST (9%)', `INR ${cgst.toLocaleString('en-IN')}`],
+      ['SGST (9%)', `INR ${sgst.toLocaleString('en-IN')}`],
+      ['Shipping', data.shipping === 0 ? 'FREE' : `INR ${data.shipping.toLocaleString('en-IN')}`],
     ];
     if (data.discount > 0) {
-      summaryLines.push(['Discount', `-Rs.${data.discount.toLocaleString()}`]);
+      summaryLines.push(['Discount', `- INR ${data.discount.toLocaleString('en-IN')}`]);
     }
     const summaryH = summaryLines.length * 8 + 24;
     doc.roundedRect(summaryX - 6, finalY - 4, summaryW + 12, summaryH, 3, 3, 'F');
@@ -225,7 +225,7 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL', summaryX, totalY + 8);
     doc.setFontSize(14);
-    doc.text(`Rs.${data.total.toLocaleString()}`, pw - 14, totalY + 8, { align: 'right' });
+    doc.text(`INR ${data.total.toLocaleString('en-IN')}`, pw - 14, totalY + 8, { align: 'right' });
 
     // --- GST Summary banner ---
     const gstY = finalY + summaryH + 16;
@@ -240,7 +240,7 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(120, 53, 15);
     doc.text(
-      `Total GST Rs.${gstAmount.toLocaleString()} (CGST: Rs.${cgst.toLocaleString()} + SGST: Rs.${sgst.toLocaleString()}) | GSTIN: 27AABCS1234R1ZP`,
+      `Total GST INR ${gstAmount.toLocaleString('en-IN')} (CGST: INR ${cgst.toLocaleString('en-IN')} + SGST: INR ${sgst.toLocaleString('en-IN')}) | GSTIN: 27AABCS1234R1ZP`,
       20,
       gstY + 11
     );
