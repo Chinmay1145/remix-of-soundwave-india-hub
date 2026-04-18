@@ -227,27 +227,42 @@ const Profile = () => {
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="full_name">Full Name</Label>
+                      <Label htmlFor="full_name">
+                        Full Name <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="full_name"
-                        placeholder="Enter your full name"
+                        placeholder="e.g. Rahul Sharma"
                         value={profile.full_name}
-                        onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^A-Za-z\s.'-]/g, '');
+                          setProfile({ ...profile, full_name: v });
+                        }}
+                        maxLength={100}
                         className="h-11"
                       />
+                      <p className="text-[11px] text-muted-foreground">Letters only — no numbers or symbols</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">
+                        Phone Number <span className="text-destructive">*</span>
+                      </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="phone"
-                          placeholder="Enter phone number"
+                          placeholder="10-digit mobile number"
                           value={profile.phone}
-                          onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            setProfile({ ...profile, phone: v });
+                          }}
+                          inputMode="numeric"
+                          maxLength={10}
                           className="h-11 pl-10"
                         />
                       </div>
+                      <p className="text-[11px] text-muted-foreground">10 digits, starting with 6/7/8/9</p>
                     </div>
                   </div>
                 </div>
@@ -268,27 +283,52 @@ const Profile = () => {
                   </h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="address">Street Address</Label>
+                      <Label htmlFor="address">
+                        Street Address <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="address"
-                        placeholder="Enter your street address"
+                        placeholder="House no, street, area"
                         value={profile.address}
                         onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                        maxLength={200}
                         className="h-11"
                       />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
-                        <Input id="city" placeholder="City" value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} className="h-11" />
+                        <Input
+                          id="city"
+                          placeholder="City"
+                          value={profile.city}
+                          onChange={(e) => setProfile({ ...profile, city: e.target.value.replace(/[^A-Za-z\s.'-]/g, '') })}
+                          maxLength={50}
+                          className="h-11"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="state">State</Label>
-                        <Input id="state" placeholder="State" value={profile.state} onChange={(e) => setProfile({ ...profile, state: e.target.value })} className="h-11" />
+                        <Input
+                          id="state"
+                          placeholder="State"
+                          value={profile.state}
+                          onChange={(e) => setProfile({ ...profile, state: e.target.value.replace(/[^A-Za-z\s.'-]/g, '') })}
+                          maxLength={50}
+                          className="h-11"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pincode">Pincode</Label>
-                        <Input id="pincode" placeholder="Pincode" value={profile.pincode} onChange={(e) => setProfile({ ...profile, pincode: e.target.value })} className="h-11" />
+                        <Input
+                          id="pincode"
+                          placeholder="6 digits"
+                          value={profile.pincode}
+                          onChange={(e) => setProfile({ ...profile, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                          inputMode="numeric"
+                          maxLength={6}
+                          className="h-11"
+                        />
                       </div>
                     </div>
                   </div>
