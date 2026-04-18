@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Save, ChevronLeft, Loader2, ShoppingBag, Heart, Shield, LogOut, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, ChevronLeft, Loader2, ShoppingBag, Heart, Shield, LogOut, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -141,6 +141,7 @@ const Profile = () => {
 
   const quickLinks = [
     { icon: ShoppingBag, label: 'My Orders', path: '/my-orders', color: 'from-blue-500 to-blue-600' },
+    { icon: BarChart3, label: 'Reports', path: '/reports', color: 'from-emerald-500 to-teal-600' },
     { icon: Heart, label: 'Wishlist', path: '/wishlist', color: 'from-pink-500 to-pink-600' },
     { icon: Shield, label: 'Track Order', path: '/track-order', color: 'from-purple-500 to-purple-600' },
   ];
