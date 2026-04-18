@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Save, ChevronLeft, Loader2, ShoppingBag, Heart, Shield, LogOut, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Save, ChevronLeft, Loader2, ShoppingBag, Heart, Shield, LogOut, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,32 +55,66 @@ const Profile = () => {
     fetchProfile();
   }, [user]);
 
+  const validateProfile = () => {
+    const errors: string[] = [];
+    if (!profile.full_name.trim()) {
+      errors.push('Full name is required');
+    } else if (!/^[A-Za-z][A-Za-z\s.'-]{1,99}$/.test(profile.full_name.trim())) {
+      errors.push('Full name must contain only letters (no numbers or symbols)');
+    }
+    if (!profile.phone.trim()) {
+      errors.push('Phone number is required');
+    } else if (!/^[6-9]\d{9}$/.test(profile.phone.trim())) {
+      errors.push('Phone must be a valid 10-digit Indian mobile number');
+    }
+    if (!profile.address.trim()) {
+      errors.push('Address is required');
+    } else if (profile.address.trim().length < 5) {
+      errors.push('Address must be at least 5 characters');
+    }
+    if (profile.pincode && !/^\d{6}$/.test(profile.pincode.trim())) {
+      errors.push('Pincode must be exactly 6 digits');
+    }
+    return errors;
+  };
+
   const handleSave = async () => {
     if (!user) return;
+    const errors = validateProfile();
+    if (errors.length > 0) {
+      errors.forEach((e) => toast.error(e));
+      return;
+    }
     setSaving(true);
-    
-    // Try update first
+
+    const cleanProfile = {
+      full_name: profile.full_name.trim(),
+      phone: profile.phone.trim(),
+      address: profile.address.trim(),
+      city: profile.city.trim(),
+      state: profile.state.trim(),
+      pincode: profile.pincode.trim(),
+    };
+
     const { data: updateData, error: updateError } = await supabase
       .from('profiles')
-      .update(profile)
+      .update(cleanProfile)
       .eq('user_id', user.id)
       .select();
 
     if (updateError) {
-      // If update fails, try insert
       const { error: insertErr } = await supabase
         .from('profiles')
-        .insert({ user_id: user.id, ...profile });
+        .insert({ user_id: user.id, ...cleanProfile });
       if (insertErr) {
         toast.error('Failed to save profile');
       } else {
         toast.success('Profile saved successfully!');
       }
     } else if (!updateData || updateData.length === 0) {
-      // No row was updated (doesn't exist yet), insert instead
       const { error: insertErr } = await supabase
         .from('profiles')
-        .insert({ user_id: user.id, ...profile });
+        .insert({ user_id: user.id, ...cleanProfile });
       if (insertErr) {
         toast.error('Failed to save profile');
       } else {
@@ -107,6 +141,7 @@ const Profile = () => {
 
   const quickLinks = [
     { icon: ShoppingBag, label: 'My Orders', path: '/my-orders', color: 'from-blue-500 to-blue-600' },
+    { icon: BarChart3, label: 'Reports', path: '/reports', color: 'from-emerald-500 to-teal-600' },
     { icon: Heart, label: 'Wishlist', path: '/wishlist', color: 'from-pink-500 to-pink-600' },
     { icon: Shield, label: 'Track Order', path: '/track-order', color: 'from-purple-500 to-purple-600' },
   ];
@@ -157,7 +192,7 @@ const Profile = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="grid grid-cols-3 gap-3 mb-6"
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6"
           >
             {quickLinks.map((link) => (
               <button
@@ -193,27 +228,42 @@ const Profile = () => {
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="full_name">Full Name</Label>
+                      <Label htmlFor="full_name">
+                        Full Name <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="full_name"
-                        placeholder="Enter your full name"
+                        placeholder="e.g. Rahul Sharma"
                         value={profile.full_name}
-                        onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^A-Za-z\s.'-]/g, '');
+                          setProfile({ ...profile, full_name: v });
+                        }}
+                        maxLength={100}
                         className="h-11"
                       />
+                      <p className="text-[11px] text-muted-foreground">Letters only — no numbers or symbols</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone">
+                        Phone Number <span className="text-destructive">*</span>
+                      </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           id="phone"
-                          placeholder="Enter phone number"
+                          placeholder="10-digit mobile number"
                           value={profile.phone}
-                          onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                          onChange={(e) => {
+                            const v = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            setProfile({ ...profile, phone: v });
+                          }}
+                          inputMode="numeric"
+                          maxLength={10}
                           className="h-11 pl-10"
                         />
                       </div>
+                      <p className="text-[11px] text-muted-foreground">10 digits, starting with 6/7/8/9</p>
                     </div>
                   </div>
                 </div>
@@ -234,27 +284,52 @@ const Profile = () => {
                   </h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="address">Street Address</Label>
+                      <Label htmlFor="address">
+                        Street Address <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="address"
-                        placeholder="Enter your street address"
+                        placeholder="House no, street, area"
                         value={profile.address}
                         onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                        maxLength={200}
                         className="h-11"
                       />
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
-                        <Input id="city" placeholder="City" value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} className="h-11" />
+                        <Input
+                          id="city"
+                          placeholder="City"
+                          value={profile.city}
+                          onChange={(e) => setProfile({ ...profile, city: e.target.value.replace(/[^A-Za-z\s.'-]/g, '') })}
+                          maxLength={50}
+                          className="h-11"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="state">State</Label>
-                        <Input id="state" placeholder="State" value={profile.state} onChange={(e) => setProfile({ ...profile, state: e.target.value })} className="h-11" />
+                        <Input
+                          id="state"
+                          placeholder="State"
+                          value={profile.state}
+                          onChange={(e) => setProfile({ ...profile, state: e.target.value.replace(/[^A-Za-z\s.'-]/g, '') })}
+                          maxLength={50}
+                          className="h-11"
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="pincode">Pincode</Label>
-                        <Input id="pincode" placeholder="Pincode" value={profile.pincode} onChange={(e) => setProfile({ ...profile, pincode: e.target.value })} className="h-11" />
+                        <Input
+                          id="pincode"
+                          placeholder="6 digits"
+                          value={profile.pincode}
+                          onChange={(e) => setProfile({ ...profile, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                          inputMode="numeric"
+                          maxLength={6}
+                          className="h-11"
+                        />
                       </div>
                     </div>
                   </div>
