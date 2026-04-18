@@ -55,32 +55,66 @@ const Profile = () => {
     fetchProfile();
   }, [user]);
 
+  const validateProfile = () => {
+    const errors: string[] = [];
+    if (!profile.full_name.trim()) {
+      errors.push('Full name is required');
+    } else if (!/^[A-Za-z][A-Za-z\s.'-]{1,99}$/.test(profile.full_name.trim())) {
+      errors.push('Full name must contain only letters (no numbers or symbols)');
+    }
+    if (!profile.phone.trim()) {
+      errors.push('Phone number is required');
+    } else if (!/^[6-9]\d{9}$/.test(profile.phone.trim())) {
+      errors.push('Phone must be a valid 10-digit Indian mobile number');
+    }
+    if (!profile.address.trim()) {
+      errors.push('Address is required');
+    } else if (profile.address.trim().length < 5) {
+      errors.push('Address must be at least 5 characters');
+    }
+    if (profile.pincode && !/^\d{6}$/.test(profile.pincode.trim())) {
+      errors.push('Pincode must be exactly 6 digits');
+    }
+    return errors;
+  };
+
   const handleSave = async () => {
     if (!user) return;
+    const errors = validateProfile();
+    if (errors.length > 0) {
+      errors.forEach((e) => toast.error(e));
+      return;
+    }
     setSaving(true);
-    
-    // Try update first
+
+    const cleanProfile = {
+      full_name: profile.full_name.trim(),
+      phone: profile.phone.trim(),
+      address: profile.address.trim(),
+      city: profile.city.trim(),
+      state: profile.state.trim(),
+      pincode: profile.pincode.trim(),
+    };
+
     const { data: updateData, error: updateError } = await supabase
       .from('profiles')
-      .update(profile)
+      .update(cleanProfile)
       .eq('user_id', user.id)
       .select();
 
     if (updateError) {
-      // If update fails, try insert
       const { error: insertErr } = await supabase
         .from('profiles')
-        .insert({ user_id: user.id, ...profile });
+        .insert({ user_id: user.id, ...cleanProfile });
       if (insertErr) {
         toast.error('Failed to save profile');
       } else {
         toast.success('Profile saved successfully!');
       }
     } else if (!updateData || updateData.length === 0) {
-      // No row was updated (doesn't exist yet), insert instead
       const { error: insertErr } = await supabase
         .from('profiles')
-        .insert({ user_id: user.id, ...profile });
+        .insert({ user_id: user.id, ...cleanProfile });
       if (insertErr) {
         toast.error('Failed to save profile');
       } else {
