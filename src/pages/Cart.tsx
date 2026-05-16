@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag, ChevronLeft } from 'lucide-react';
@@ -13,16 +13,56 @@ const Cart = () => {
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
 
+  // Restore any previously applied coupon (e.g. user returned from checkout)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('soundwave-coupon');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.code && typeof parsed?.discount === 'number') {
+          setCouponCode(parsed.code);
+          setDiscount(parsed.discount);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const persistCoupon = (code: string, pct: number) => {
+    if (pct > 0) {
+      sessionStorage.setItem('soundwave-coupon', JSON.stringify({ code, discount: pct }));
+    } else {
+      sessionStorage.removeItem('soundwave-coupon');
+    }
+  };
+
   const handleApplyCoupon = () => {
-    if (couponCode.toLowerCase() === 'save10') {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      toast.error('Please enter a coupon code');
+      return;
+    }
+    if (code === 'SAVE10') {
       setDiscount(10);
+      persistCoupon(code, 10);
       toast.success('Coupon applied! 10% discount');
-    } else if (couponCode.toLowerCase() === 'save20') {
+    } else if (code === 'SAVE20') {
       setDiscount(20);
+      persistCoupon(code, 20);
       toast.success('Coupon applied! 20% discount');
+    } else if (code === 'FREESHIP') {
+      setDiscount(5);
+      persistCoupon(code, 5);
+      toast.success('Coupon applied! 5% discount + free shipping');
     } else {
       toast.error('Invalid coupon code');
     }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode('');
+    setDiscount(0);
+    persistCoupon('', 0);
+    toast.success('Coupon removed');
   };
 
   const subtotal = getTotal();
