@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, subDays } from 'date-fns';
-import { Calendar as CalendarIcon, Download, BarChart3, TrendingUp, Package, IndianRupee, ShoppingBag, Loader2, ChevronLeft, PieChart, Filter, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, BarChart3, TrendingUp, Package, IndianRupee, ShoppingBag, Loader2, ChevronLeft, PieChart, Filter, Sparkles, FileSpreadsheet, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -150,6 +150,21 @@ const Reports = () => {
   }, [filteredOrders]);
 
   const totalCatRevenue = categoryStats.reduce((s, c) => s + c.revenue, 0);
+
+  // Top selling products
+  const topProducts = useMemo(() => {
+    const map = new Map<string, { name: string; qty: number; revenue: number }>();
+    filteredOrders.forEach((o) => {
+      o.items?.forEach((it) => {
+        const key = it.product_id;
+        if (!map.has(key)) map.set(key, { name: it.product_name, qty: 0, revenue: 0 });
+        const e = map.get(key)!;
+        e.qty += it.quantity;
+        e.revenue += Number(it.price) * it.quantity;
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+  }, [filteredOrders]);
 
   // Status breakdown
   const statusStats = useMemo(() => {
@@ -320,6 +335,40 @@ const Reports = () => {
     const filename = `SoundWave_Report_${preset}_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`;
     doc.save(filename);
     toast.success('Report downloaded successfully!');
+  };
+
+  const generateCSV = () => {
+    const rows: string[] = [];
+    rows.push(`SoundWave Report,${rangeLabel.replace(/,/g, ' ')}`);
+    rows.push(`Generated,${format(new Date(), 'dd MMM yyyy HH:mm')}`);
+    rows.push('');
+    rows.push('SUMMARY');
+    rows.push(`Total Revenue,INR ${stats.totalRevenue}`);
+    rows.push(`Total Orders,${stats.totalOrders}`);
+    rows.push(`Items Sold,${stats.totalItems}`);
+    rows.push(`Avg Order Value,INR ${Math.round(stats.avgOrder)}`);
+    rows.push('');
+    rows.push('CATEGORY-WISE');
+    rows.push('Category,Orders,Units,Revenue,Share %');
+    categoryStats.forEach((c) => {
+      const share = totalCatRevenue > 0 ? ((c.revenue / totalCatRevenue) * 100).toFixed(1) : '0.0';
+      rows.push(`${c.category},${c.orderCount},${c.quantity},${c.revenue},${share}`);
+    });
+    rows.push('');
+    rows.push('ORDERS');
+    rows.push('Order #,Date,Status,Items,Amount (INR)');
+    filteredOrders.forEach((o) => {
+      const items = o.items?.reduce((s, i) => s + i.quantity, 0) || 0;
+      rows.push(`${o.order_number},${format(new Date(o.created_at), 'dd MMM yyyy')},${o.order_status},${items},${o.total}`);
+    });
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SoundWave_Report_${preset}_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported successfully!');
   };
 
   if (authLoading || !user) {
