@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, subDays } from 'date-fns';
-import { Calendar as CalendarIcon, Download, BarChart3, TrendingUp, Package, IndianRupee, ShoppingBag, Loader2, ChevronLeft, PieChart, Filter, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, BarChart3, TrendingUp, Package, IndianRupee, ShoppingBag, Loader2, ChevronLeft, PieChart, Filter, Sparkles, FileSpreadsheet, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -150,6 +150,21 @@ const Reports = () => {
   }, [filteredOrders]);
 
   const totalCatRevenue = categoryStats.reduce((s, c) => s + c.revenue, 0);
+
+  // Top selling products
+  const topProducts = useMemo(() => {
+    const map = new Map<string, { name: string; qty: number; revenue: number }>();
+    filteredOrders.forEach((o) => {
+      o.items?.forEach((it) => {
+        const key = it.product_id;
+        if (!map.has(key)) map.set(key, { name: it.product_name, qty: 0, revenue: 0 });
+        const e = map.get(key)!;
+        e.qty += it.quantity;
+        e.revenue += Number(it.price) * it.quantity;
+      });
+    });
+    return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+  }, [filteredOrders]);
 
   // Status breakdown
   const statusStats = useMemo(() => {
@@ -322,6 +337,40 @@ const Reports = () => {
     toast.success('Report downloaded successfully!');
   };
 
+  const generateCSV = () => {
+    const rows: string[] = [];
+    rows.push(`SoundWave Report,${rangeLabel.replace(/,/g, ' ')}`);
+    rows.push(`Generated,${format(new Date(), 'dd MMM yyyy HH:mm')}`);
+    rows.push('');
+    rows.push('SUMMARY');
+    rows.push(`Total Revenue,INR ${stats.totalRevenue}`);
+    rows.push(`Total Orders,${stats.totalOrders}`);
+    rows.push(`Items Sold,${stats.totalItems}`);
+    rows.push(`Avg Order Value,INR ${Math.round(stats.avgOrder)}`);
+    rows.push('');
+    rows.push('CATEGORY-WISE');
+    rows.push('Category,Orders,Units,Revenue,Share %');
+    categoryStats.forEach((c) => {
+      const share = totalCatRevenue > 0 ? ((c.revenue / totalCatRevenue) * 100).toFixed(1) : '0.0';
+      rows.push(`${c.category},${c.orderCount},${c.quantity},${c.revenue},${share}`);
+    });
+    rows.push('');
+    rows.push('ORDERS');
+    rows.push('Order #,Date,Status,Items,Amount (INR)');
+    filteredOrders.forEach((o) => {
+      const items = o.items?.reduce((s, i) => s + i.quantity, 0) || 0;
+      rows.push(`${o.order_number},${format(new Date(o.created_at), 'dd MMM yyyy')},${o.order_status},${items},${o.total}`);
+    });
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SoundWave_Report_${preset}_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported successfully!');
+  };
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -368,10 +417,16 @@ const Reports = () => {
                   <p className="text-muted-foreground text-sm mt-0.5">{rangeLabel}</p>
                 </div>
               </div>
-              <Button variant="glow" size="lg" onClick={generatePDF} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download PDF Report
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="lg" onClick={generateCSV} className="gap-2">
+                  <FileSpreadsheet className="w-4 h-4" />
+                  CSV
+                </Button>
+                <Button variant="glow" size="lg" onClick={generatePDF} className="gap-2">
+                  <Download className="w-4 h-4" />
+                  PDF Report
+                </Button>
+              </div>
             </div>
           </motion.div>
 
@@ -532,6 +587,35 @@ const Reports = () => {
 
               {/* Orders in period */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-card rounded-2xl border border-border p-6">
+                {topProducts.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Trophy className="w-4 h-4" />
+                      Top Selling Products
+                    </h3>
+                    <div className="space-y-2">
+                      {topProducts.map((p, i) => (
+                        <div key={p.name + i} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition-colors">
+                          <div className={cn(
+                            'w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm',
+                            i === 0 ? 'bg-yellow-500/20 text-yellow-600' :
+                            i === 1 ? 'bg-slate-400/20 text-slate-500' :
+                            i === 2 ? 'bg-orange-500/20 text-orange-600' :
+                            'bg-muted text-muted-foreground'
+                          )}>
+                            #{i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">{p.name}</p>
+                            <p className="text-xs text-muted-foreground">{p.qty} units sold</p>
+                          </div>
+                          <p className="font-bold font-mono text-sm">₹{p.revenue.toLocaleString('en-IN')}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4" />
                   Orders in this period ({filteredOrders.length})
