@@ -95,11 +95,9 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Add to Cart
               </Button>
-              <Link to={`/product/${product.id}`}>
-                <Button variant="secondary" size="icon">
-                  <Eye className="w-4 h-4" />
-                </Button>
-              </Link>
+              <Button variant="secondary" size="icon" aria-label="Quick view" asChild>
+                <span><Eye className="w-4 h-4" /></span>
+              </Button>
             </motion.div>
           </div>
 
