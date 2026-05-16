@@ -95,13 +95,8 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 Add to Cart
               </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                aria-label="Quick view"
-              >
-                <Eye className="w-4 h-4" />
+              <Button variant="secondary" size="icon" aria-label="Quick view" asChild>
+                <span><Eye className="w-4 h-4" /></span>
               </Button>
             </motion.div>
           </div>
