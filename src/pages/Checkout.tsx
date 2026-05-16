@@ -25,13 +25,17 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 const checkoutSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(10, 'Phone number must be at least 10 digits').max(15),
-  address: z.string().min(10, 'Please enter a complete address').max(500),
-  city: z.string().min(2, 'City is required').max(100),
-  state: z.string().min(2, 'State is required').max(100),
-  pincode: z.string().min(6, 'Pincode must be 6 digits').max(10),
+  name: z.string().trim()
+    .min(2, 'Name must be at least 2 characters').max(100)
+    .regex(/^[A-Za-z\s.'-]+$/, 'Name can only contain letters'),
+  email: z.string().trim().email('Invalid email address').max(255),
+  phone: z.string().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit Indian mobile number'),
+  address: z.string().trim().min(10, 'Please enter a complete address').max(500),
+  city: z.string().trim().min(2, 'City is required').max(100)
+    .regex(/^[A-Za-z\s.'-]+$/, 'City can only contain letters'),
+  state: z.string().trim().min(2, 'State is required').max(100)
+    .regex(/^[A-Za-z\s.'-]+$/, 'State can only contain letters'),
+  pincode: z.string().regex(/^\d{6}$/, 'Pincode must be exactly 6 digits'),
 });
 
 const paymentMethods = [
@@ -50,6 +54,7 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -87,13 +92,37 @@ const Checkout = () => {
     loadProfile();
   }, [user, profileLoaded]);
 
+  // Load coupon applied in cart
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('soundwave-coupon');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.code && typeof parsed?.discount === 'number' && parsed.discount > 0) {
+          setCoupon(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
   const subtotal = getTotal();
-  const shipping = subtotal > 999 ? 0 : 99;
+  const discountAmount = coupon ? Math.round((subtotal * coupon.discount) / 100) : 0;
+  const shippingFree = subtotal > 999 || coupon?.code === 'FREESHIP';
+  const shipping = shippingFree ? 0 : 99;
   const codCharge = selectedPayment === 'cod' ? 49 : 0;
-  const total = subtotal + shipping + codCharge;
+  const total = subtotal - discountAmount + shipping + codCharge;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let value = e.target.value;
+    // Field-specific filtering
+    if (name === 'name' || name === 'city' || name === 'state') {
+      value = value.replace(/[^A-Za-z\s.'-]/g, '');
+    } else if (name === 'phone') {
+      value = value.replace(/\D/g, '').slice(0, 10);
+    } else if (name === 'pincode') {
+      value = value.replace(/\D/g, '').slice(0, 6);
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
