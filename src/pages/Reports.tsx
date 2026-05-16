@@ -417,10 +417,16 @@ const Reports = () => {
                   <p className="text-muted-foreground text-sm mt-0.5">{rangeLabel}</p>
                 </div>
               </div>
-              <Button variant="glow" size="lg" onClick={generatePDF} className="gap-2">
-                <Download className="w-4 h-4" />
-                Download PDF Report
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="lg" onClick={generateCSV} className="gap-2">
+                  <FileSpreadsheet className="w-4 h-4" />
+                  CSV
+                </Button>
+                <Button variant="glow" size="lg" onClick={generatePDF} className="gap-2">
+                  <Download className="w-4 h-4" />
+                  PDF Report
+                </Button>
+              </div>
             </div>
           </motion.div>
 
