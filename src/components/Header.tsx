@@ -145,7 +145,7 @@ const Header = () => {
                     <motion.span
                       key={cartItemCount}
                       initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: [0, 1.3, 1], opacity: 1 }}
+                      animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0, opacity: 0 }}
                       transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                       className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs rounded-full flex items-center justify-center font-bold shadow-lg shadow-primary/30"
