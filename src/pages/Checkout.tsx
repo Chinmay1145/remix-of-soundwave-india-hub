@@ -181,7 +181,7 @@ const Checkout = () => {
           order_status: 'confirmed',
           subtotal,
           shipping,
-          discount: 0,
+          discount: discountAmount,
           total,
         })
         .select()
@@ -215,6 +215,7 @@ const Checkout = () => {
 
       // Clear cart after successful order
       clearCart();
+      sessionStorage.removeItem('soundwave-coupon');
       
       // Also sync cleared cart to database
       if (user) {
