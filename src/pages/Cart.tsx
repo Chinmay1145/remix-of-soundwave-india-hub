@@ -265,16 +265,23 @@ const Cart = () => {
                         type="text"
                         placeholder="Enter code"
                         value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        disabled={discount > 0}
                         className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-background border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
                       />
                     </div>
-                    <Button onClick={handleApplyCoupon} variant="secondary">
-                      Apply
-                    </Button>
+                    {discount > 0 ? (
+                      <Button onClick={handleRemoveCoupon} variant="secondary" type="button">
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button onClick={handleApplyCoupon} variant="secondary" type="button">
+                        Apply
+                      </Button>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Try: SAVE10 or SAVE20
+                    Try: SAVE10, SAVE20 or FREESHIP
                   </p>
                 </div>
 
