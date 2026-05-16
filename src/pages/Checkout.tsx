@@ -457,6 +457,12 @@ const Checkout = () => {
                       <span>Subtotal</span>
                       <span>₹{subtotal.toLocaleString()}</span>
                     </div>
+                    {coupon && discountAmount > 0 && (
+                      <div className="flex justify-between text-primary">
+                        <span>Coupon ({coupon.code}) -{coupon.discount}%</span>
+                        <span>-₹{discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-muted-foreground">
                       <span>Shipping</span>
                       <span>{shipping === 0 ? <span className="text-primary">FREE</span> : `₹${shipping}`}</span>
