@@ -587,6 +587,35 @@ const Reports = () => {
 
               {/* Orders in period */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-card rounded-2xl border border-border p-6">
+                {topProducts.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Trophy className="w-4 h-4" />
+                      Top Selling Products
+                    </h3>
+                    <div className="space-y-2">
+                      {topProducts.map((p, i) => (
+                        <div key={p.name + i} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/40 hover:bg-secondary/70 transition-colors">
+                          <div className={cn(
+                            'w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm',
+                            i === 0 ? 'bg-yellow-500/20 text-yellow-600' :
+                            i === 1 ? 'bg-slate-400/20 text-slate-500' :
+                            i === 2 ? 'bg-orange-500/20 text-orange-600' :
+                            'bg-muted text-muted-foreground'
+                          )}>
+                            #{i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm truncate">{p.name}</p>
+                            <p className="text-xs text-muted-foreground">{p.qty} units sold</p>
+                          </div>
+                          <p className="font-bold font-mono text-sm">₹{p.revenue.toLocaleString('en-IN')}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4" />
                   Orders in this period ({filteredOrders.length})
