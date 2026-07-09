@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
-import { Headphones, Users, Award, Target, Heart, Zap, Shield, Globe } from 'lucide-react';
+import { Headphones, Award, Target, Heart, Zap, Shield, Globe, ArrowRight, Sparkles, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -45,47 +47,69 @@ const About = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden hero-gradient">
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-primary/10 blur-3xl"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 8, repeat: Infinity }}
+      {/* Hero — Bold Editorial */}
+      <section className="relative pt-32 pb-24 overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] bg-primary/20 blur-[140px] rounded-full" />
+          <div
+            className="absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                'linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)',
+              backgroundSize: '60px 60px',
+            }}
           />
         </div>
 
-        <div className="container mx-auto px-4 relative">
+        <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center max-w-3xl mx-auto"
+            transition={{ duration: 0.7 }}
+            className="max-w-5xl mx-auto"
           >
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="sound-wave">
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
-              <span className="text-sm font-medium text-primary uppercase tracking-widest">
-                Our Story
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-8">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">
+                Est. 2020 · Mumbai, India
               </span>
             </div>
 
-            <h1 className="font-display text-5xl md:text-6xl font-bold mb-6">
-              Redefining <span className="gradient-text">Audio</span> in India
+            <h1 className="font-display text-6xl md:text-8xl lg:text-[9rem] font-bold leading-[0.9] tracking-tighter mb-8">
+              WE MAKE<br />
+              <span className="gradient-text">SOUND</span> LOUDER<br />
+              THAN <span className="italic font-serif text-primary">life.</span>
             </h1>
-            <p className="text-lg text-muted-foreground">
-              SoundWave was born from a simple idea: everyone deserves access to premium audio 
-              without breaking the bank. Since 2020, we've been on a mission to bring the best 
-              wireless audio gear to India.
-            </p>
+
+            <div className="grid md:grid-cols-3 gap-8 mt-12">
+              <div className="md:col-span-2">
+                <p className="text-xl md:text-2xl leading-relaxed text-foreground/80">
+                  SoundWave isn't just a store — it's a movement. We hunt down the boldest audio
+                  gear on the planet and drop it in the hands of every Indian who refuses to
+                  settle for silence.
+                </p>
+              </div>
+              <div className="flex flex-col justify-end gap-4">
+                <Button variant="glow" size="lg" asChild>
+                  <Link to="/products">
+                    Shop the Sound <ArrowRight className="w-4 h-4 ml-2" />
+                  </Link>
+                </Button>
+                <Button variant="outline" size="lg" asChild>
+                  <Link to="/contact">
+                    <Play className="w-4 h-4 mr-2 fill-current" /> Our Story
+                  </Link>
+                </Button>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-card border-y border-border">
+      {/* Stats — Marquee band */}
+      <section className="relative py-12 border-y-2 border-primary/40 bg-gradient-to-r from-primary/15 via-background to-primary/15 overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-primary/20">
             {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -93,12 +117,14 @@ const About = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center"
+                className="text-center px-4"
               >
-                <div className="font-display text-4xl md:text-5xl font-bold text-primary mb-2">
+                <div className="font-display text-5xl md:text-7xl font-bold gradient-text mb-2 leading-none">
                   {stat.value}
                 </div>
-                <div className="text-muted-foreground">{stat.label}</div>
+                <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold">
+                  {stat.label}
+                </div>
               </motion.div>
             ))}
           </div>
@@ -106,35 +132,43 @@ const About = () => {
       </section>
 
       {/* Mission Section */}
-      <section className="py-24 bg-background">
+      <section className="py-32 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Target className="w-6 h-6 text-primary" />
-                </div>
-                <span className="text-sm font-medium text-primary uppercase tracking-widest">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-[2px] w-12 bg-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">
                   Our Mission
                 </span>
               </div>
-              <h2 className="font-display text-4xl font-bold mb-6">
-                Making Premium Audio <span className="gradient-text">Accessible</span>
+              <h2 className="font-display text-5xl md:text-6xl font-bold mb-8 leading-[1] tracking-tight">
+                Premium sound.<br /><span className="gradient-text">Zero compromise.</span>
               </h2>
-              <p className="text-muted-foreground text-lg mb-6">
+              <p className="text-lg text-foreground/70 mb-6 leading-relaxed">
                 We believe that great sound shouldn't be a luxury. Our mission is to democratize 
                 premium audio by curating the best products from top Indian and international brands, 
                 making them available at competitive prices.
               </p>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground leading-relaxed">
                 From the bustling streets of Mumbai to the serene hills of Shimla, we're bringing 
                 the joy of wireless freedom to every corner of India. Whether you're a music lover, 
                 gamer, or fitness enthusiast, we have the perfect audio companion for you.
               </p>
+
+              <div className="mt-10 flex items-center gap-6">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Target className="w-7 h-7 text-primary" />
+                </div>
+                <div>
+                  <div className="font-bold text-lg">Curated. Tested. Trusted.</div>
+                  <div className="text-sm text-muted-foreground">Every product hand-picked by audio nerds.</div>
+                </div>
+              </div>
             </motion.div>
 
             <motion.div
@@ -143,11 +177,25 @@ const About = () => {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="aspect-square rounded-3xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <Headphones className="w-48 h-48 text-primary/50" />
+              <div
+                className="aspect-square rounded-[2.5rem] overflow-hidden flex items-center justify-center relative shadow-[0_30px_120px_-20px_hsl(16_100%_55%/0.5)]"
+                style={{ background: 'linear-gradient(135deg, hsl(16 100% 55%) 0%, hsl(35 100% 55%) 100%)' }}
+              >
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1], rotate: [0, 3, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <Headphones className="w-60 h-60 text-white/90" strokeWidth={1.2} />
+                </motion.div>
+                <div className="absolute top-6 left-6 text-white/80 text-xs uppercase tracking-[0.3em] font-bold">
+                  Signal · 2020→∞
+                </div>
+                <div className="absolute bottom-6 right-6 text-white/80 text-xs uppercase tracking-[0.3em] font-bold">
+                  Volume Max
+                </div>
               </div>
               <motion.div
-                className="absolute -bottom-6 -right-6 bg-card rounded-2xl p-6 border border-border shadow-lg"
+                className="absolute -bottom-8 -left-8 bg-background rounded-2xl p-6 border-2 border-primary/50 shadow-2xl"
                 whileHover={{ scale: 1.05 }}
               >
                 <div className="flex items-center gap-4">
@@ -166,37 +214,43 @@ const About = () => {
       </section>
 
       {/* Values Section */}
-      <section className="py-24 bg-card">
+      <section className="py-32 bg-card relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 blur-[120px] rounded-full" />
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="max-w-3xl mb-20"
           >
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Our <span className="gradient-text">Values</span>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-[2px] w-12 bg-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">What We Stand For</span>
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight">
+              Four rules.<br /><span className="gradient-text">Zero exceptions.</span>
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              These core principles guide everything we do at SoundWave
-            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
             {values.map((value, index) => (
               <motion.div
                 key={value.title}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="p-6 rounded-2xl bg-background border border-border hover:border-primary/50 transition-all group"
+                transition={{ delay: index * 0.08 }}
+                whileHover={{ y: -6 }}
+                className="p-8 rounded-3xl bg-background border border-border hover:border-primary hover:shadow-[0_20px_60px_-15px_hsl(16_100%_55%/0.4)] transition-all group relative overflow-hidden"
               >
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                  <value.icon className="w-7 h-7 text-primary" />
+                <div className="absolute -top-4 -right-4 font-display text-8xl font-bold text-primary/5 group-hover:text-primary/10 transition-colors">
+                  0{index + 1}
                 </div>
-                <h3 className="font-semibold text-lg mb-2">{value.title}</h3>
-                <p className="text-muted-foreground text-sm">{value.description}</p>
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary group-hover:scale-110 transition-all">
+                  <value.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
+                </div>
+                <h3 className="font-display text-xl font-bold mb-3">{value.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{value.description}</p>
               </motion.div>
             ))}
           </div>
@@ -204,42 +258,53 @@ const About = () => {
       </section>
 
       {/* Team Section */}
-      <section className="py-24 bg-background">
+      <section className="py-32 bg-background">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16"
           >
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Meet Our <span className="gradient-text">Team</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              The passionate people behind SoundWave
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-[2px] w-12 bg-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">The Crew</span>
+              </div>
+              <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight">
+                Humans behind<br />the <span className="gradient-text">frequency.</span>
+              </h2>
+            </div>
+            <p className="text-muted-foreground text-lg max-w-sm">
+              A tight-knit team of engineers, designers, and audiophiles obsessed with one thing — sound done right.
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {team.map((member, index) => (
               <motion.div
                 key={member.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center group"
+                transition={{ delay: index * 0.08 }}
+                className="group cursor-pointer"
               >
-                <div className="relative mb-4 rounded-2xl overflow-hidden aspect-square">
+                <div className="relative mb-4 rounded-3xl overflow-hidden aspect-[3/4]">
                   <img
                     src={member.image}
                     alt={member.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 group-hover:grayscale-0 grayscale"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <div className="text-xs font-bold text-primary uppercase tracking-[0.2em] mb-1">
+                      0{index + 1}
+                    </div>
+                    <h3 className="font-display text-xl font-bold text-foreground">{member.name}</h3>
+                    <p className="text-muted-foreground text-sm">{member.role}</p>
+                  </div>
                 </div>
-                <h3 className="font-semibold text-lg">{member.name}</h3>
-                <p className="text-muted-foreground text-sm">{member.role}</p>
               </motion.div>
             ))}
           </div>
@@ -247,24 +312,25 @@ const About = () => {
       </section>
 
       {/* Location & Store Section */}
-      <section className="py-24 bg-card">
+      <section className="py-32 bg-card">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="max-w-3xl mb-16"
           >
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Visit Our <span className="gradient-text">Store</span>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-[2px] w-12 bg-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">Come Say Hi</span>
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight">
+              Feel the <span className="gradient-text">bass</span> in person.
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Come experience our products in person at our flagship store
-            </p>
           </motion.div>
 
           <div className="grid lg:grid-cols-2 gap-8">
-            <div className="rounded-2xl overflow-hidden border border-border h-[400px]">
+            <div className="rounded-3xl overflow-hidden border-2 border-primary/30 h-[500px] shadow-2xl">
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.854!2d72.8777!3d19.0760!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c6306644edc1%3A0x5da4ed8f8d648c69!2sMumbai%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1703956789012"
                 width="100%"
@@ -276,24 +342,28 @@ const About = () => {
                 title="SoundWave Store Location"
               />
             </div>
-            <div className="flex flex-col justify-center space-y-6">
-              <div className="p-6 rounded-2xl bg-background border border-border">
-                <h3 className="font-semibold text-lg mb-2 text-primary">Flagship Store - Mumbai</h3>
+            <div className="flex flex-col justify-center space-y-5">
+              <div className="p-8 rounded-3xl bg-background border border-border hover:border-primary/50 transition-colors">
+                <div className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] mb-2">Flagship · Mumbai</div>
+                <h3 className="font-display text-2xl font-bold mb-3">The Audio HQ</h3>
                 <p className="text-muted-foreground">123 Audio Street, Tech Park</p>
                 <p className="text-muted-foreground">Mumbai, Maharashtra 400001</p>
-                <p className="text-muted-foreground mt-2">📞 +91 98765 43210</p>
-                <p className="text-muted-foreground">📧 store@soundwave.in</p>
+                <div className="mt-4 pt-4 border-t border-border flex items-center gap-6 text-sm">
+                  <span className="text-foreground">+91 98765 43210</span>
+                  <span className="text-muted-foreground">store@soundwave.in</span>
+                </div>
               </div>
-              <div className="p-6 rounded-2xl bg-background border border-border">
-                <h3 className="font-semibold text-lg mb-2 text-primary">Store Hours</h3>
-                <p className="text-muted-foreground">Mon - Sat: 10:00 AM - 8:00 PM</p>
-                <p className="text-muted-foreground">Sunday: 11:00 AM - 6:00 PM</p>
-              </div>
-              <div className="p-6 rounded-2xl bg-background border border-border">
-                <h3 className="font-semibold text-lg mb-2 text-primary">Corporate Office</h3>
-                <p className="text-muted-foreground">SoundWave India Pvt. Ltd.</p>
-                <p className="text-muted-foreground">Bandra Kurla Complex, Mumbai</p>
-                <p className="text-muted-foreground">Maharashtra 400051</p>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="p-6 rounded-2xl bg-background border border-border">
+                  <div className="text-[10px] font-bold text-primary uppercase tracking-[0.25em] mb-2">Hours</div>
+                  <p className="text-sm">Mon–Sat<br /><span className="font-bold">10AM – 8PM</span></p>
+                  <p className="text-sm mt-2 text-muted-foreground">Sun 11AM – 6PM</p>
+                </div>
+                <div className="p-6 rounded-2xl bg-primary text-primary-foreground">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] mb-2 opacity-80">Corporate</div>
+                  <p className="text-sm">Bandra Kurla Complex</p>
+                  <p className="text-sm">Mumbai, 400051</p>
+                </div>
               </div>
             </div>
           </div>
