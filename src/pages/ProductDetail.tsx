@@ -24,6 +24,7 @@ import ProductReviews from '@/components/ProductReviews';
 import { getProductById, products } from '@/lib/products';
 import { useCartStore, useWishlistStore } from '@/lib/store';
 import { toast } from 'sonner';
+import { notifyAddToCart, notifyAddToWishlist, notifyRemoveFromWishlist } from '@/lib/notify';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,21 +58,16 @@ const ProductDetail = () => {
     for (let i = 0; i < quantity; i++) {
       addToCart(product);
     }
-    toast.success(`Added ${quantity} ${product.name} to cart!`, {
-      action: {
-        label: 'View Cart',
-        onClick: () => window.location.href = '/cart',
-      },
-    });
+    notifyAddToCart(product);
   };
 
   const handleWishlist = () => {
     if (inWishlist) {
       removeFromWishlist(product.id);
-      toast.info('Removed from wishlist');
+      notifyRemoveFromWishlist(product);
     } else {
       addToWishlist(product);
-      toast.success('Added to wishlist!');
+      notifyAddToWishlist(product);
     }
   };
 

@@ -4,6 +4,7 @@ import { Download, X, Headphones, FileText, Shield, CreditCard, Hash, MapPin, Ph
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { PDF_COLORS, drawPdfHeader, drawPdfFooters, drawAccentRule, sanitizePdfText, formatCurrency, amountInWords, tableTheme } from '@/lib/pdf';
 
 interface OrderItem {
   product_name: string;
@@ -52,211 +53,259 @@ const InvoiceGenerator = ({ data, showPreview, onClose }: InvoiceGeneratorProps)
     const doc = new jsPDF();
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();
+    const S = sanitizePdfText;
+    const money = formatCurrency;
 
-    // --- Accent bar at top ---
-    doc.setFillColor(232, 65, 24);
-    doc.rect(0, 0, pw, 4, 'F');
-
-    // --- Header section ---
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 4, pw, 42, 'F');
-
-    // Brand
-    doc.setTextColor(232, 65, 24);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SoundWave', 16, 24);
-    doc.setTextColor(148, 163, 184);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('PREMIUM AUDIO STORE', 16, 32);
-
-    // Invoice title
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(26);
-    doc.setFont('helvetica', 'bold');
-    doc.text('INVOICE', pw - 16, 22, { align: 'right' });
-
-    // Order number & date pills
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(148, 163, 184);
-    doc.text(data.orderNumber, pw - 16, 30, { align: 'right' });
-    doc.text(formattedDate, pw - 16, 37, { align: 'right' });
-
-    let y = 56;
-
-    // --- Info cards ---
-    const cardW = (pw - 40) / 2;
-
-    // Billed To card
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(14, y, cardW, 44, 3, 3, 'F');
-    doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(14, y, cardW, 44, 3, 3, 'S');
-
-    doc.setTextColor(232, 65, 24);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text('BILLED TO', 20, y + 9);
-
-    doc.setTextColor(30, 41, 59);
-    doc.setFontSize(11);
-    doc.text(data.customerName, 20, y + 18);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text(data.shippingAddress, 20, y + 25);
-    doc.text(`${data.city}, ${data.state} - ${data.pincode}`, 20, y + 31);
-    doc.text(`${data.customerEmail}  |  ${data.customerPhone}`, 20, y + 37);
-
-    // From card
-    const fromX = 14 + cardW + 12;
-    doc.setFillColor(248, 250, 252);
-    doc.roundedRect(fromX, y, cardW, 44, 3, 3, 'F');
-    doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(fromX, y, cardW, 44, 3, 3, 'S');
-
-    doc.setTextColor(232, 65, 24);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text('FROM', fromX + 6, y + 9);
-
-    doc.setTextColor(30, 41, 59);
-    doc.setFontSize(11);
-    doc.text('SoundWave India Pvt. Ltd.', fromX + 6, y + 18);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    doc.text('123 Audio Street, Tech Park', fromX + 6, y + 25);
-    doc.text('Mumbai, Maharashtra - 400001', fromX + 6, y + 31);
-    doc.text('GSTIN: 27AABCS1234R1ZP', fromX + 6, y + 37);
-
-    // Payment badge
-    y += 50;
-    doc.setFillColor(255, 237, 213);
-    doc.roundedRect(14, y, 60, 8, 2, 2, 'F');
-    doc.setTextColor(194, 65, 12);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`PAYMENT: ${data.paymentMethod.toUpperCase()}`, 18, y + 5.5);
-
-    // --- Items Table ---
-    y += 14;
-    autoTable(doc, {
-      startY: y,
-      head: [['S.No', 'Product', 'Qty', 'Unit Price', 'Amount']],
-      body: data.items.map((item, i) => [
-        String(i + 1).padStart(2, '0'),
-        item.product_name,
-        item.quantity.toString(),
-        `INR ${item.price.toLocaleString('en-IN')}`,
-        `INR ${(item.price * item.quantity).toLocaleString('en-IN')}`,
-      ]),
-      headStyles: {
-        fillColor: [15, 23, 42],
-        textColor: [255, 255, 255],
-        fontSize: 8,
-        fontStyle: 'bold',
-        cellPadding: 4,
-      },
-      bodyStyles: {
-        fontSize: 9,
-        textColor: [30, 41, 59],
-        cellPadding: 4,
-      },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      columnStyles: {
-        0: { cellWidth: 12, halign: 'center' },
-        2: { halign: 'center', cellWidth: 16 },
-        3: { halign: 'right', cellWidth: 32 },
-        4: { halign: 'right', cellWidth: 32, fontStyle: 'bold' },
-      },
-      margin: { left: 14, right: 14 },
-      tableLineColor: [226, 232, 240],
-      tableLineWidth: 0.2,
+    let y = drawPdfHeader(doc, {
+      eyebrow: 'PREMIUM AUDIO STORE',
+      title: 'TAX INVOICE',
+      metaLines: [`Invoice #: ${S(data.orderNumber)}`, `Date: ${S(formattedDate)}`],
     });
 
-    // --- Summary ---
-    const finalY = (doc as any).lastAutoTable.finalY + 12;
-    const summaryW = 82;
+    // --- Invoice meta strip: number / date / due date ---
+    const metaW = (pw - 28) / 3;
+    const metaItems: [string, string][] = [
+      ['INVOICE NO.', S(data.orderNumber)],
+      ['INVOICE DATE', S(formattedDate)],
+      ['DUE DATE', 'Paid on Delivery / Online'],
+    ];
+    metaItems.forEach(([label, val], i) => {
+      const x = 14 + i * metaW;
+      doc.setDrawColor(...PDF_COLORS.border);
+      doc.setLineWidth(0.2);
+      if (i > 0) doc.line(x, y - 6, x, y + 6);
+      doc.setTextColor(...PDF_COLORS.primary);
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, x + (i === 0 ? 0 : 6), y - 2);
+      doc.setTextColor(...PDF_COLORS.inkSoft);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(val, x + (i === 0 ? 0 : 6), y + 5);
+    });
+
+    y += 14;
+
+    // --- Billed To / Shipped To / Seller cards ---
+    const cardW = (pw - 28 - 8) / 3;
+    const cardH = 46;
+    const cardTop = y;
+
+    const drawCard = (x: number, title: string, lines: string[], boldLine?: string) => {
+      doc.setFillColor(...PDF_COLORS.surface);
+      doc.roundedRect(x, cardTop, cardW, cardH, 2.5, 2.5, 'F');
+      doc.setDrawColor(...PDF_COLORS.border);
+      doc.roundedRect(x, cardTop, cardW, cardH, 2.5, 2.5, 'S');
+      doc.setTextColor(...PDF_COLORS.primary);
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, x + 5, cardTop + 8);
+      let ly = cardTop + 15;
+      if (boldLine) {
+        doc.setTextColor(...PDF_COLORS.ink);
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'bold');
+        doc.text(S(boldLine), x + 5, ly);
+        ly += 6;
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      doc.setTextColor(...PDF_COLORS.muted);
+      lines.forEach((line) => {
+        const wrapped = doc.splitTextToSize(S(line), cardW - 10);
+        wrapped.forEach((w: string) => {
+          if (ly <= cardTop + cardH - 3) doc.text(w, x + 5, ly);
+          ly += 4.2;
+        });
+      });
+    };
+
+    drawCard(14, 'BILLED TO', [
+      data.shippingAddress,
+      `${data.city}, ${data.state} - ${data.pincode}`,
+      data.customerEmail,
+      data.customerPhone,
+    ], data.customerName);
+
+    drawCard(14 + cardW + 4, 'SHIPPED TO', [
+      data.shippingAddress,
+      `${data.city}, ${data.state} - ${data.pincode}`,
+    ], data.customerName);
+
+    drawCard(14 + (cardW + 4) * 2, 'SOLD BY', [
+      '123 Audio Street, Tech Park',
+      'Mumbai, Maharashtra - 400001',
+      'GSTIN: 27AABCS1234R1ZP',
+      'PAN: AABCS1234R',
+    ], 'SoundWave India Pvt. Ltd.');
+
+    y = cardTop + cardH + 8;
+
+    // Payment + status badges
+    doc.setFillColor(...PDF_COLORS.primarySoft);
+    doc.roundedRect(14, y, 66, 8, 2, 2, 'F');
+    doc.setTextColor(...PDF_COLORS.primaryDeep);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`PAYMENT: ${S(data.paymentMethod).toUpperCase()}`, 18, y + 5.5);
+
+    doc.setFillColor(...PDF_COLORS.successSoft);
+    doc.roundedRect(84, y, 46, 8, 2, 2, 'F');
+    doc.setTextColor(...PDF_COLORS.success);
+    doc.text('STATUS: PAID', 88, y + 5.5);
+
+    y += 14;
+
+    // --- Items Table ---
+    const gstAmountRow = Math.round(data.subtotal * GST_RATE / (1 + GST_RATE));
+    autoTable(doc, {
+      startY: y,
+      head: [['S.No', 'Item', 'HSN', 'Qty', 'Rate', 'Taxable', 'GST%', 'Amount']],
+      body: data.items.map((item, i) => {
+        const lineTotal = item.price * item.quantity;
+        const lineTaxable = Math.round(lineTotal / (1 + GST_RATE));
+        return [
+          String(i + 1).padStart(2, '0'),
+          S(item.product_name),
+          '8518',
+          item.quantity.toString(),
+          money(item.price),
+          money(lineTaxable),
+          '18%',
+          money(lineTotal),
+        ];
+      }),
+      ...tableTheme,
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center' },
+        2: { cellWidth: 14, halign: 'center' },
+        3: { halign: 'center', cellWidth: 12 },
+        4: { halign: 'right', cellWidth: 26 },
+        5: { halign: 'right', cellWidth: 26 },
+        6: { halign: 'center', cellWidth: 14 },
+        7: { halign: 'right', cellWidth: 28, fontStyle: 'bold' },
+      },
+      margin: { left: 14, right: 14, top: 46 },
+      showHead: 'everyPage',
+      didDrawPage: () => {
+        // repeat brand strip on subsequent pages
+        if ((doc as any).internal.getCurrentPageInfo().pageNumber > 1) {
+          doc.setFillColor(...PDF_COLORS.ink);
+          doc.rect(0, 0, pw, 14, 'F');
+          doc.setFillColor(...PDF_COLORS.primary);
+          doc.rect(0, 0, pw, 1.2, 'F');
+          doc.setTextColor(...PDF_COLORS.primary);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text('SoundWave', 14, 9.5);
+          doc.setTextColor(...PDF_COLORS.mutedLight);
+          doc.setFontSize(7);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`Invoice ${S(data.orderNumber)} (contd.)`, pw - 14, 9.5, { align: 'right' });
+        }
+      },
+    });
+
+    // --- Summary panel ---
+    let finalY = (doc as any).lastAutoTable.finalY + 10;
+    const summaryW = 88;
     const summaryX = pw - 14 - summaryW;
 
-    // Summary card background
-    doc.setFillColor(248, 250, 252);
-    const summaryLines = [
-      ['Subtotal (excl. GST)', `INR ${baseAmount.toLocaleString('en-IN')}`],
-      ['CGST (9%)', `INR ${cgst.toLocaleString('en-IN')}`],
-      ['SGST (9%)', `INR ${sgst.toLocaleString('en-IN')}`],
-      ['Shipping', data.shipping === 0 ? 'FREE' : `INR ${data.shipping.toLocaleString('en-IN')}`],
+    const summaryLines: [string, string, boolean?][] = [
+      ['Subtotal (Taxable Value)', money(baseAmount)],
+      ['CGST (9%)', money(cgst)],
+      ['SGST (9%)', money(sgst)],
+      ['Shipping', data.shipping === 0 ? 'FREE' : money(data.shipping)],
     ];
     if (data.discount > 0) {
-      summaryLines.push(['Discount', `- INR ${data.discount.toLocaleString('en-IN')}`]);
+      summaryLines.push(['Discount', `- ${money(data.discount)}`]);
     }
-    const summaryH = summaryLines.length * 8 + 24;
+    const summaryH = summaryLines.length * 7.5 + 26;
+
+    if (finalY + summaryH + 40 > ph - 24) {
+      doc.addPage();
+      finalY = 24;
+    }
+
+    doc.setFillColor(...PDF_COLORS.surface);
     doc.roundedRect(summaryX - 6, finalY - 4, summaryW + 12, summaryH, 3, 3, 'F');
-    doc.setDrawColor(226, 232, 240);
+    doc.setDrawColor(...PDF_COLORS.border);
     doc.roundedRect(summaryX - 6, finalY - 4, summaryW + 12, summaryH, 3, 3, 'S');
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 116, 139);
     summaryLines.forEach((line, i) => {
-      const ly = finalY + 4 + i * 8;
+      const ly = finalY + 4 + i * 7.5;
+      doc.setTextColor(...PDF_COLORS.muted);
       doc.text(line[0], summaryX, ly);
       if (line[1] === 'FREE') {
-        doc.setTextColor(232, 65, 24);
+        doc.setTextColor(...PDF_COLORS.primary);
         doc.setFont('helvetica', 'bold');
+      } else {
+        doc.setTextColor(...PDF_COLORS.inkSoft);
       }
       doc.text(line[1], pw - 14, ly, { align: 'right' });
-      doc.setTextColor(100, 116, 139);
       doc.setFont('helvetica', 'normal');
     });
 
-    // Total
-    const totalY = finalY + 4 + summaryLines.length * 8 + 2;
-    doc.setDrawColor(15, 23, 42);
-    doc.setLineWidth(0.5);
-    doc.line(summaryX, totalY, pw - 14, totalY);
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(12);
+    const totalY = finalY + 4 + summaryLines.length * 7.5 + 4;
+    doc.setFillColor(...PDF_COLORS.ink);
+    doc.roundedRect(summaryX - 6, totalY - 6, summaryW + 12, 15, 2, 2, 'F');
+    doc.setTextColor(...PDF_COLORS.white);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL', summaryX, totalY + 8);
-    doc.setFontSize(14);
-    doc.text(`INR ${data.total.toLocaleString('en-IN')}`, pw - 14, totalY + 8, { align: 'right' });
+    doc.text('GRAND TOTAL', summaryX, totalY + 3);
+    doc.setFontSize(13);
+    doc.setTextColor(...PDF_COLORS.primary);
+    doc.text(money(data.total), pw - 14, totalY + 3, { align: 'right' });
 
-    // --- GST Summary banner ---
-    const gstY = finalY + summaryH + 16;
-    doc.setFillColor(255, 237, 213);
+    // --- Amount in words ---
+    const wordsY = totalY + 16;
+    doc.setTextColor(...PDF_COLORS.muted);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`Amount in words: ${S(amountInWords(data.total))}`, 14, wordsY);
+
+    // --- GST summary banner ---
+    const gstY = wordsY + 6;
+    doc.setFillColor(...PDF_COLORS.primarySoft);
     doc.roundedRect(14, gstY, pw - 28, 14, 3, 3, 'F');
-    doc.setDrawColor(251, 191, 36);
+    doc.setDrawColor(...PDF_COLORS.amber);
     doc.roundedRect(14, gstY, pw - 28, 14, 3, 3, 'S');
     doc.setFontSize(7);
-    doc.setTextColor(146, 64, 14);
+    doc.setTextColor(...PDF_COLORS.amberDeep);
     doc.setFont('helvetica', 'bold');
     doc.text('GST SUMMARY', 20, gstY + 6);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(120, 53, 15);
     doc.text(
-      `Total GST INR ${gstAmount.toLocaleString('en-IN')} (CGST: INR ${cgst.toLocaleString('en-IN')} + SGST: INR ${sgst.toLocaleString('en-IN')}) | GSTIN: 27AABCS1234R1ZP`,
+      `Total GST ${money(gstAmountRow)} (CGST ${money(cgst)} + SGST ${money(sgst)}) | GSTIN: 27AABCS1234R1ZP`,
       20,
       gstY + 11
     );
 
-    // --- Footer ---
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, ph - 22, pw, 22, 'F');
-    doc.setFillColor(232, 65, 24);
-    doc.rect(0, ph - 22, pw, 2, 'F');
-
-    doc.setTextColor(148, 163, 184);
-    doc.setFontSize(8);
+    // --- Terms & Conditions ---
+    let termsY = gstY + 20;
+    if (termsY + 30 > ph - 24) {
+      doc.addPage();
+      termsY = 24;
+    }
+    doc.setTextColor(...PDF_COLORS.ink);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Terms & Conditions', 14, termsY);
+    drawAccentRule(doc, 14, termsY + 2, 40);
+    doc.setFontSize(6.8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Thank you for shopping with SoundWave!', pw / 2, ph - 12, { align: 'center' });
-    doc.setFontSize(6);
-    doc.text('This is a computer-generated invoice and does not require a signature.', pw / 2, ph - 7, { align: 'center' });
+    doc.setTextColor(...PDF_COLORS.muted);
+    const terms = [
+      '1. Goods once sold will only be exchanged or refunded as per our returns policy.',
+      '2. Warranty claims are subject to manufacturer terms and conditions.',
+      '3. All disputes are subject to Mumbai jurisdiction only.',
+      '4. This invoice is a computer-generated document and does not require a physical signature.',
+    ];
+    terms.forEach((t, i) => doc.text(t, 14, termsY + 8 + i * 4.5));
+
+    drawPdfFooters(doc, 'Thank you for shopping with SoundWave!');
 
     doc.save(`Invoice_${data.orderNumber}.pdf`);
   };

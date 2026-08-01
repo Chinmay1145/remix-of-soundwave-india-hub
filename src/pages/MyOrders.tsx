@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Truck, ChevronDown, Search, Calendar, MapPin, ShoppingBag, Download, Eye, FileText, Loader2, CheckCircle2, Home, Clock, XCircle, RefreshCw, IndianRupee, Play } from 'lucide-react';
+import { Package, Truck, ChevronDown, Search, Calendar, MapPin, ShoppingBag, Download, Eye, FileText, Loader2, CheckCircle2, Home, Clock, XCircle, RefreshCw, IndianRupee, Play, Wallet, TrendingUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -227,9 +227,15 @@ const MyOrders = () => {
       <Header />
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-5xl">
-          {/* Page Header */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-            <div className="flex items-center justify-between">
+          {/* Hero Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-8 mb-8"
+          >
+            <div className="absolute -top-20 -right-16 w-72 h-72 rounded-full bg-primary/10 blur-[90px]" />
+            <div className="absolute bottom-0 left-1/3 w-56 h-56 rounded-full bg-primary/5 blur-[70px]" />
+            <div className="relative flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
                   <ShoppingBag className="w-7 h-7 text-primary-foreground" />
@@ -239,19 +245,51 @@ const MyOrders = () => {
                     My <span className="gradient-text">Orders</span>
                   </h1>
                   <p className="text-muted-foreground text-sm mt-0.5">
-                    {orders.length} order{orders.length !== 1 ? 's' : ''} placed
+                    Track, manage, and download invoices for all your purchases
                   </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={fetchOrders} className="hidden sm:flex">
+              <Button variant="outline" size="sm" onClick={fetchOrders}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
             </div>
           </motion.div>
 
+          {/* Summary Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+          >
+            {[
+              { label: 'Total Orders', value: orders.length, icon: Package, color: 'text-primary' },
+              { label: 'Total Spent', value: `₹${orders.reduce((a, o) => a + (o.total || 0), 0).toLocaleString()}`, icon: Wallet, color: 'text-blue-400' },
+              { label: 'Delivered', value: orderCounts.delivered, icon: CheckCircle2, color: 'text-green-400' },
+              { label: 'In Transit', value: orderCounts.processing + orderCounts.shipped, icon: Truck, color: 'text-purple-400' },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 + i * 0.05 }}
+                className="bg-card border border-border rounded-2xl p-4 hover:border-primary/30 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center">
+                    <stat.icon className={`w-4.5 h-4.5 ${stat.color}`} />
+                  </div>
+                  <TrendingUp className="w-3.5 h-3.5 text-muted-foreground/40" />
+                </div>
+                <p className="font-display text-xl md:text-2xl font-bold">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
           {/* Status Tabs with counts */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-6">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-6">
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {tabs.map((tab) => (
                 <button
@@ -277,7 +315,7 @@ const MyOrders = () => {
           </motion.div>
 
           {/* Search */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mb-8">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }} className="mb-8">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
@@ -287,10 +325,18 @@ const MyOrders = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 h-12 bg-card border-border rounded-xl"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <XCircle className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </motion.div>
 
-          {/* Orders List */}
+                    {/* Orders List */}
           {loading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
@@ -405,6 +451,32 @@ const MyOrders = () => {
                               {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
                             </span>
                           </div>
+
+                          {/* Item thumbnail stack */}
+                          {order.items && order.items.length > 0 && (
+                            <div className="flex items-center mt-3 -space-x-3">
+                              {order.items.slice(0, 4).map((item, i) => (
+                                item.product_image ? (
+                                  <img
+                                    key={item.id}
+                                    src={item.product_image}
+                                    alt={item.product_name}
+                                    className="w-9 h-9 rounded-lg object-cover border-2 border-card bg-secondary"
+                                    style={{ zIndex: 4 - i }}
+                                  />
+                                ) : (
+                                  <div key={item.id} className="w-9 h-9 rounded-lg bg-secondary border-2 border-card flex items-center justify-center" style={{ zIndex: 4 - i }}>
+                                    <Package className="w-3.5 h-3.5 text-muted-foreground" />
+                                  </div>
+                                )
+                              ))}
+                              {order.items.length > 4 && (
+                                <div className="w-9 h-9 rounded-lg bg-secondary border-2 border-card flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                                  +{order.items.length - 4}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="text-right flex flex-col items-end gap-2 flex-shrink-0">
                           <p className="font-display font-bold text-xl text-primary">₹{order.total.toLocaleString()}</p>

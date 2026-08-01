@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useWishlistStore, useCartStore } from '@/lib/store';
 import { toast } from 'sonner';
+import { notifyMovedToCart, notifyRemoveFromWishlist } from '@/lib/notify';
 
 const Wishlist = () => {
   const { items, removeFromWishlist } = useWishlistStore();
@@ -14,7 +15,7 @@ const Wishlist = () => {
   const handleAddToCart = (product: typeof items[0]) => {
     addToCart(product);
     removeFromWishlist(product.id);
-    toast.success(`${product.name} moved to cart!`);
+    notifyMovedToCart(product);
   };
 
   if (items.length === 0) {
@@ -125,7 +126,7 @@ const Wishlist = () => {
                       className="text-muted-foreground hover:text-destructive"
                       onClick={() => {
                         removeFromWishlist(product.id);
-                        toast.success('Removed from wishlist');
+                        notifyRemoveFromWishlist(product);
                       }}
                     >
                       <Trash2 className="w-4 h-4" />
