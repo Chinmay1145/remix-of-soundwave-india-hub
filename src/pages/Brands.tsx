@@ -90,6 +90,13 @@ const Brands = () => {
     return { productCount: bp.length, avgRating: avgRating.toFixed(1), totalReviews: bp.reduce((a, p) => a + p.reviews, 0) };
   };
 
+  const featuredBrand = brands.reduce((best, b) => {
+    const count = getBrandProducts(b).length;
+    return count > getBrandProducts(best).length ? b : best;
+  }, brands[0]);
+  const featuredInfo = brandInfo[featuredBrand];
+  const featuredStats = getBrandStats(featuredBrand);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -155,6 +162,62 @@ const Brands = () => {
             </motion.div>
           </div>
         </section>
+
+        {/* Featured Brand Spotlight */}
+        {featuredInfo && (
+          <section className="py-6">
+            <div className="container mx-auto px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card"
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${featuredInfo.accent} opacity-[0.06]`} />
+                <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-[100px]" />
+                <div className="relative grid grid-cols-1 md:grid-cols-[auto_1fr_auto] items-center gap-8 p-8 md:p-10">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={featuredInfo.logo}
+                      alt={featuredBrand}
+                      className="w-20 h-20 rounded-2xl object-cover border-2 border-primary/30 shadow-lg"
+                    />
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/15 border border-primary/30 rounded-full text-primary text-xs font-bold uppercase tracking-wider md:hidden">
+                      <Crown className="w-3.5 h-3.5" />
+                      Top Brand
+                    </div>
+                  </div>
+                  <div>
+                    <div className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 bg-primary/15 border border-primary/30 rounded-full text-primary text-xs font-bold uppercase tracking-wider mb-3">
+                      <Crown className="w-3.5 h-3.5" />
+                      Top Brand This Month
+                    </div>
+                    <h3 className="font-display text-2xl md:text-3xl font-bold mb-1">{featuredBrand}</h3>
+                    <p className="text-primary/80 italic text-sm mb-3">"{featuredInfo.tagline}"</p>
+                    <p className="text-muted-foreground text-sm max-w-xl mb-4">{featuredInfo.description}</p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Package className="w-4 h-4 text-primary" /> {featuredStats.productCount} Products
+                      </span>
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> {featuredStats.avgRating} Rating
+                      </span>
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Users className="w-4 h-4 text-primary" /> {featuredInfo.stats.customers} Customers
+                      </span>
+                    </div>
+                  </div>
+                  <Link to={`/products?brand=${featuredBrand.toLowerCase()}`}>
+                    <Button variant="glow" size="lg" className="w-full md:w-auto">
+                      Shop {featuredBrand}
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        )}
 
         {/* Brands Grid */}
         <section className="py-16">

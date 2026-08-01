@@ -3,7 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   CheckCircle2, Package, Truck, MapPin, Mail, Phone, Copy, ExternalLink, 
-  Sparkles, PartyPopper, FileText, Download, Eye
+  Sparkles, PartyPopper, FileText, Download, Eye, ClipboardList, Home,
+  Boxes, CheckCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -218,6 +219,79 @@ const OrderSuccess = () => {
                     </div>
                   </div>
 
+                  {/* Order Items */}
+                  {orderItems.length > 0 && (
+                    <div className="mb-8">
+                      <h3 className="font-semibold mb-3 flex items-center gap-2">
+                        <Boxes className="w-5 h-5 text-primary" />
+                        Items in Your Order
+                      </h3>
+                      <div className="space-y-3">
+                        {orderItems.map((item, i) => (
+                          <div key={i} className="flex items-center gap-3 bg-secondary/40 rounded-xl p-3">
+                            <div className="w-14 h-14 rounded-lg bg-background overflow-hidden flex-shrink-0 border border-border">
+                              {item.product_image && (
+                                <img src={item.product_image} alt={item.product_name} className="w-full h-full object-contain p-1" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm line-clamp-1">{item.product_name}</p>
+                              <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                            </div>
+                            <p className="font-semibold text-sm">₹{(item.price * item.quantity).toLocaleString()}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Delivery Timeline */}
+                  <div className="mb-8">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-primary" />
+                      Delivery Timeline
+                    </h3>
+                    <div className="relative pl-2">
+                      {[
+                        { label: 'Order Confirmed', icon: CheckCheck, done: true, date: 'Today' },
+                        { label: 'Shipped', icon: Package, done: false, date: 'Within 1-2 days' },
+                        { label: 'Out for Delivery', icon: Truck, done: false, date: 'Approx. 4-5 days' },
+                        {
+                          label: 'Delivered',
+                          icon: Home,
+                          done: false,
+                          date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', {
+                            weekday: 'short', month: 'short', day: 'numeric',
+                          }),
+                        },
+                      ].map((step, i, arr) => (
+                        <div key={step.label} className="flex gap-4 relative">
+                          <div className="flex flex-col items-center">
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.8 + i * 0.15 }}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                step.done ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground'
+                              }`}
+                            >
+                              <step.icon className="w-4 h-4" />
+                            </motion.div>
+                            {i < arr.length - 1 && (
+                              <div className={`w-0.5 flex-1 min-h-8 ${step.done ? 'bg-primary' : 'bg-border'}`} />
+                            )}
+                          </div>
+                          <div className="pb-8">
+                            <p className={`font-medium text-sm ${step.done ? 'text-foreground' : 'text-muted-foreground'}`}>
+                              {step.label}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{step.date}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* GST Breakdown */}
                   <div className="bg-secondary/50 rounded-xl p-5 mb-8">
                     <h3 className="font-semibold mb-3 flex items-center gap-2">
@@ -251,13 +325,27 @@ const OrderSuccess = () => {
               )}
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Link to={`/track-order?order=${orderNumber}`} className="col-span-2 sm:col-span-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                <Link to={`/track-order?order=${orderNumber}`}>
                   <Button variant="hero" className="w-full" size="sm">
                     <Truck className="w-4 h-4 mr-1" />
-                    Track
+                    Track Order
                   </Button>
                 </Link>
+                <Link to="/my-orders">
+                  <Button variant="outline" className="w-full" size="sm">
+                    <ClipboardList className="w-4 h-4 mr-1" />
+                    My Orders
+                  </Button>
+                </Link>
+                <Link to="/products" className="col-span-2 sm:col-span-1">
+                  <Button variant="outline" className="w-full" size="sm">
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    Continue Shopping
+                  </Button>
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <Button variant="outline" size="sm" onClick={() => setShowInvoice(true)}>
                   <Eye className="w-4 h-4 mr-1" />
                   View Invoice
@@ -276,12 +364,6 @@ const OrderSuccess = () => {
                   <Download className="w-4 h-4 mr-1" />
                   Download
                 </Button>
-                <Link to="/products">
-                  <Button variant="outline" className="w-full" size="sm">
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Shop More
-                  </Button>
-                </Link>
               </div>
             </div>
 

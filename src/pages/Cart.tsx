@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag, ChevronLeft } from 'lucide-react';
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Tag, ChevronLeft, Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useCartStore } from '@/lib/store';
 import { toast } from 'sonner';
+import { notifyRemoveFromCart } from '@/lib/notify';
+import { COUPONS, validateCoupon, type ValidateResult } from '@/lib/coupons';
 
 const Cart = () => {
   const { items, removeFromCart, updateQuantity, clearCart, getTotal } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
-  const [discount, setDiscount] = useState(0);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+
+  const subtotal = getTotal();
 
   // Restore any previously applied coupon (e.g. user returned from checkout)
   useEffect(() => {
@@ -19,20 +23,34 @@ const Cart = () => {
       const raw = sessionStorage.getItem('soundwave-coupon');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed?.code && typeof parsed?.discount === 'number') {
+        if (parsed?.code) {
+          setAppliedCode(parsed.code);
           setCouponCode(parsed.code);
-          setDiscount(parsed.discount);
         }
       }
     } catch {}
   }, []);
 
-  const persistCoupon = (code: string, pct: number) => {
-    if (pct > 0) {
-      sessionStorage.setItem('soundwave-coupon', JSON.stringify({ code, discount: pct }));
+  const persistCoupon = (code: string | null) => {
+    if (code) {
+      sessionStorage.setItem('soundwave-coupon', JSON.stringify({ code }));
     } else {
       sessionStorage.removeItem('soundwave-coupon');
     }
+  };
+
+  const result: ValidateResult | null = appliedCode ? validateCoupon(appliedCode, subtotal) : null;
+
+  const applyCode = (code: string) => {
+    const res = validateCoupon(code, subtotal);
+    if (!res.ok) {
+      toast.error(res.error || 'Invalid coupon code');
+      return;
+    }
+    setAppliedCode(res.coupon!.code);
+    setCouponCode(res.coupon!.code);
+    persistCoupon(res.coupon!.code);
+    toast.success(`Coupon applied! ${res.coupon!.label}`);
   };
 
   const handleApplyCoupon = () => {
@@ -41,33 +59,19 @@ const Cart = () => {
       toast.error('Please enter a coupon code');
       return;
     }
-    if (code === 'SAVE10') {
-      setDiscount(10);
-      persistCoupon(code, 10);
-      toast.success('Coupon applied! 10% discount');
-    } else if (code === 'SAVE20') {
-      setDiscount(20);
-      persistCoupon(code, 20);
-      toast.success('Coupon applied! 20% discount');
-    } else if (code === 'FREESHIP') {
-      setDiscount(5);
-      persistCoupon(code, 5);
-      toast.success('Coupon applied! 5% discount + free shipping');
-    } else {
-      toast.error('Invalid coupon code');
-    }
+    applyCode(code);
   };
 
   const handleRemoveCoupon = () => {
     setCouponCode('');
-    setDiscount(0);
-    persistCoupon('', 0);
+    setAppliedCode(null);
+    persistCoupon(null);
     toast.success('Coupon removed');
   };
 
-  const subtotal = getTotal();
-  const discountAmount = (subtotal * discount) / 100;
-  const shipping = subtotal > 999 ? 0 : 99;
+  const discountAmount = result?.ok ? result.discountAmount : 0;
+  const freeShippingFromCoupon = result?.ok ? result.freeShipping : false;
+  const shipping = subtotal > 999 || freeShippingFromCoupon ? 0 : 99;
   const total = subtotal - discountAmount + shipping;
 
   if (items.length === 0) {
@@ -178,7 +182,7 @@ const Cart = () => {
                             className="text-muted-foreground hover:text-destructive"
                             onClick={() => {
                               removeFromCart(item.id);
-                              toast.success('Item removed from cart');
+                              notifyRemoveFromCart(item);
                             }}
                           >
                             <Trash2 className="w-5 h-5" />
@@ -266,11 +270,11 @@ const Cart = () => {
                         placeholder="Enter code"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        disabled={discount > 0}
+                        disabled={!!(result?.ok)}
                         className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-background border border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
                       />
                     </div>
-                    {discount > 0 ? (
+                    {result?.ok ? (
                       <Button onClick={handleRemoveCoupon} variant="secondary" type="button">
                         Remove
                       </Button>
@@ -280,9 +284,47 @@ const Cart = () => {
                       </Button>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Try: SAVE10, SAVE20 or FREESHIP
-                  </p>
+                  {result && !result.ok && (
+                    <p className="text-xs text-destructive mt-2">{result.error}</p>
+                  )}
+
+                  {/* Available Offers */}
+                  <div className="mt-4 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-primary" />
+                      Available Offers
+                    </p>
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {COUPONS.map((c) => {
+                        const isApplied = result?.ok && result.coupon?.code === c.code;
+                        const eligible = !c.minCart || subtotal >= c.minCart;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            disabled={isApplied}
+                            onClick={() => applyCode(c.code)}
+                            className={`w-full text-left p-3 rounded-xl border transition-all ${
+                              isApplied
+                                ? 'border-primary bg-primary/5'
+                                : eligible
+                                ? 'border-border hover:border-primary/50 bg-background'
+                                : 'border-border/50 bg-background/50 opacity-60'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-semibold text-sm flex items-center gap-1.5">
+                                {isApplied && <Check className="w-3.5 h-3.5 text-primary" />}
+                                {c.code}
+                              </span>
+                              <span className="text-xs font-medium text-primary">{c.label}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">{c.description}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Summary Lines */}
@@ -291,9 +333,9 @@ const Cart = () => {
                     <span>Subtotal</span>
                     <span>₹{subtotal.toLocaleString()}</span>
                   </div>
-                  {discount > 0 && (
+                  {discountAmount > 0 && (
                     <div className="flex justify-between text-primary">
-                      <span>Discount ({discount}%)</span>
+                      <span>Discount ({result?.coupon?.code})</span>
                       <span>-₹{discountAmount.toLocaleString()}</span>
                     </div>
                   )}
@@ -307,7 +349,7 @@ const Cart = () => {
                       )}
                     </span>
                   </div>
-                  {subtotal < 999 && (
+                  {subtotal < 999 && shipping !== 0 && (
                     <p className="text-xs text-muted-foreground">
                       Add ₹{(999 - subtotal).toLocaleString()} more for free shipping
                     </p>

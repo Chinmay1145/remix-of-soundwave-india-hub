@@ -5,6 +5,7 @@ import { Heart, ShoppingCart, Star, Eye, Zap, Battery, Bluetooth } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { useCartStore, useWishlistStore, type Product } from '@/lib/store';
 import { toast } from 'sonner';
+import { notifyAddToCart, notifyAddToWishlist, notifyRemoveFromWishlist } from '@/lib/notify';
 
 interface ProductCardProps {
   product: Product;
@@ -21,9 +22,7 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product);
-    toast.success(`${product.name} added to cart!`, {
-      description: 'Continue shopping or proceed to checkout',
-    });
+    notifyAddToCart(product);
   };
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -31,10 +30,10 @@ const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
     e.stopPropagation();
     if (inWishlist) {
       removeFromWishlist(product.id);
-      toast.info('Removed from wishlist');
+      notifyRemoveFromWishlist(product);
     } else {
       addToWishlist(product);
-      toast.success('Added to wishlist!');
+      notifyAddToWishlist(product);
     }
   };
 

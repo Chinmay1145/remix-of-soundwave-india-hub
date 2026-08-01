@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { PDF_COLORS, drawPdfHeader, drawPdfFooters, drawAccentRule, sanitizePdfText, formatCurrency, tableTheme } from '@/lib/pdf';
 import { products as productCatalog } from '@/lib/products';
 
 type ReportPreset = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'custom';
@@ -179,82 +180,65 @@ const Reports = () => {
     const doc = new jsPDF();
     const pw = doc.internal.pageSize.getWidth();
     const ph = doc.internal.pageSize.getHeight();
+    const S = sanitizePdfText;
+    const money = formatCurrency;
 
-    // Top accent
-    doc.setFillColor(232, 65, 24);
-    doc.rect(0, 0, pw, 4, 'F');
-
-    // Header
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 4, pw, 46, 'F');
-
-    doc.setTextColor(232, 65, 24);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('SoundWave', 16, 24);
-    doc.setTextColor(148, 163, 184);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('ANALYTICS & REPORTS', 16, 32);
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('REPORT', pw - 16, 22, { align: 'right' });
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(148, 163, 184);
-    doc.text(rangeLabel.replace(/—/g, '-'), pw - 16, 30, { align: 'right' });
-    doc.text(`Generated: ${format(new Date(), 'dd MMM yyyy, HH:mm')}`, pw - 16, 37, { align: 'right' });
-
-    let y = 60;
-
-    // Summary cards
-    const cards = [
-      { label: 'TOTAL REVENUE', value: `INR ${stats.totalRevenue.toLocaleString('en-IN')}` },
-      { label: 'TOTAL ORDERS', value: stats.totalOrders.toString() },
-      { label: 'ITEMS SOLD', value: stats.totalItems.toString() },
-      { label: 'AVG ORDER VALUE', value: `INR ${Math.round(stats.avgOrder).toLocaleString('en-IN')}` },
-    ];
-    const cardW = (pw - 28 - 9) / 4;
-    cards.forEach((c, i) => {
-      const x = 14 + i * (cardW + 3);
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(x, y, cardW, 26, 2, 2, 'F');
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(x, y, cardW, 26, 2, 2, 'S');
-      doc.setTextColor(232, 65, 24);
-      doc.setFontSize(6);
-      doc.setFont('helvetica', 'bold');
-      doc.text(c.label, x + 4, y + 8);
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text(c.value, x + 4, y + 19);
+    let y = drawPdfHeader(doc, {
+      eyebrow: 'ANALYTICS & BUSINESS INTELLIGENCE',
+      title: 'SALES REPORT',
+      metaLines: [S(rangeLabel.replace(/\u2014/g, '-')), `${filteredOrders.length} orders in period`],
     });
 
-    y += 36;
+    // --- KPI summary cards ---
+    const cards = [
+      { label: 'TOTAL REVENUE', value: money(stats.totalRevenue), accent: PDF_COLORS.primary },
+      { label: 'TOTAL ORDERS', value: stats.totalOrders.toString(), accent: PDF_COLORS.ink },
+      { label: 'AVG ORDER VALUE', value: money(Math.round(stats.avgOrder)), accent: PDF_COLORS.ink },
+      { label: 'UNITS SOLD', value: stats.totalItems.toString(), accent: PDF_COLORS.ink },
+    ];
+    const gap = 4;
+    const cardW = (pw - 28 - gap * 3) / 4;
+    const cardH = 28;
+    cards.forEach((c, i) => {
+      const x = 14 + i * (cardW + gap);
+      doc.setFillColor(...PDF_COLORS.surface);
+      doc.roundedRect(x, y, cardW, cardH, 2.5, 2.5, 'F');
+      doc.setDrawColor(...PDF_COLORS.border);
+      doc.roundedRect(x, y, cardW, cardH, 2.5, 2.5, 'S');
+      doc.setFillColor(...c.accent);
+      doc.rect(x, y, 2, cardH, 'F');
+      doc.setTextColor(...PDF_COLORS.primary);
+      doc.setFontSize(6.2);
+      doc.setFont('helvetica', 'bold');
+      doc.text(c.label, x + 6, y + 9);
+      doc.setTextColor(...PDF_COLORS.ink);
+      doc.setFontSize(11.5);
+      doc.setFont('helvetica', 'bold');
+      const valFit = doc.splitTextToSize(c.value, cardW - 10);
+      doc.text(valFit[0], x + 6, y + 20);
+    });
 
-    // Category-wise table
-    doc.setTextColor(15, 23, 42);
+    y += cardH + 12;
+
+    // --- Category-wise breakdown ---
+    doc.setTextColor(...PDF_COLORS.ink);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Category-wise Sales', 14, y);
-    y += 4;
+    doc.text('Category-wise Sales Breakdown', 14, y);
+    drawAccentRule(doc, 14, y + 2, 46);
+    y += 6;
 
     autoTable(doc, {
       startY: y,
       head: [['Category', 'Orders', 'Units Sold', 'Revenue', 'Share']],
       body: categoryStats.length > 0 ? categoryStats.map((c) => [
-        c.category,
+        S(c.category),
         c.orderCount.toString(),
         c.quantity.toString(),
-        `INR ${c.revenue.toLocaleString('en-IN')}`,
+        money(c.revenue),
         `${totalCatRevenue > 0 ? ((c.revenue / totalCatRevenue) * 100).toFixed(1) : '0.0'}%`,
       ]) : [['No data', '-', '-', '-', '-']],
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', cellPadding: 4 },
-      bodyStyles: { fontSize: 9, textColor: [30, 41, 59], cellPadding: 4 },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
+      ...tableTheme,
       columnStyles: {
         1: { halign: 'center', cellWidth: 24 },
         2: { halign: 'center', cellWidth: 28 },
@@ -264,49 +248,77 @@ const Reports = () => {
       margin: { left: 14, right: 14 },
     });
 
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as any).lastAutoTable.finalY + 12;
 
-    // Order status table
-    if (y > ph - 60) { doc.addPage(); y = 20; }
+    // --- Top products ---
+    if (y > ph - 70) { doc.addPage(); y = 22; }
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
+    doc.setTextColor(...PDF_COLORS.ink);
+    doc.text('Top Selling Products', 14, y);
+    drawAccentRule(doc, 14, y + 2, 40);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [['Rank', 'Product', 'Units Sold', 'Revenue']],
+      body: topProducts.length > 0 ? topProducts.map((p, i) => [
+        `#${i + 1}`,
+        S(p.name),
+        p.qty.toString(),
+        money(p.revenue),
+      ]) : [['-', 'No data', '-', '-']],
+      ...tableTheme,
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 16 },
+        2: { halign: 'center', cellWidth: 28 },
+        3: { halign: 'right', cellWidth: 40, fontStyle: 'bold' },
+      },
+      margin: { left: 14, right: 14 },
+    });
+
+    y = (doc as any).lastAutoTable.finalY + 12;
+
+    // --- Order status breakdown ---
+    if (y > ph - 70) { doc.addPage(); y = 22; }
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...PDF_COLORS.ink);
     doc.text('Order Status Breakdown', 14, y);
-    y += 4;
+    drawAccentRule(doc, 14, y + 2, 44);
+    y += 6;
     autoTable(doc, {
       startY: y,
       head: [['Status', 'Count']],
       body: statusStats.length > 0 ? statusStats.map((s) => [s.status.replace(/_/g, ' ').toUpperCase(), s.count.toString()]) : [['No data', '-']],
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', cellPadding: 4 },
-      bodyStyles: { fontSize: 9, cellPadding: 4 },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
+      ...tableTheme,
       columnStyles: { 1: { halign: 'center', cellWidth: 30 } },
       margin: { left: 14, right: 14 },
     });
 
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as any).lastAutoTable.finalY + 12;
 
-    // Orders detail
-    if (y > ph - 60) { doc.addPage(); y = 20; }
+    // --- Orders detail ---
+    if (y > ph - 70) { doc.addPage(); y = 22; }
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
+    doc.setTextColor(...PDF_COLORS.ink);
     doc.text('Orders Detail', 14, y);
-    y += 4;
+    drawAccentRule(doc, 14, y + 2, 30);
+    y += 6;
 
     autoTable(doc, {
       startY: y,
       head: [['Order #', 'Date', 'Status', 'Items', 'Amount']],
       body: filteredOrders.length > 0 ? filteredOrders.map((o) => [
-        o.order_number,
+        S(o.order_number),
         format(new Date(o.created_at), 'dd MMM yyyy'),
-        o.order_status.replace(/_/g, ' '),
+        S(o.order_status.replace(/_/g, ' ')),
         (o.items?.reduce((s, i) => s + i.quantity, 0) || 0).toString(),
-        `INR ${Number(o.total).toLocaleString('en-IN')}`,
+        money(Number(o.total)),
       ]) : [['No orders in this period', '-', '-', '-', '-']],
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold', cellPadding: 4 },
-      bodyStyles: { fontSize: 8, textColor: [30, 41, 59], cellPadding: 3.5 },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
+      ...tableTheme,
+      showHead: 'everyPage',
       columnStyles: {
         1: { cellWidth: 30 },
         2: { cellWidth: 28 },
@@ -316,21 +328,7 @@ const Reports = () => {
       margin: { left: 14, right: 14 },
     });
 
-    // Footer
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let p = 1; p <= pageCount; p++) {
-      doc.setPage(p);
-      doc.setFillColor(15, 23, 42);
-      doc.rect(0, ph - 18, pw, 18, 'F');
-      doc.setFillColor(232, 65, 24);
-      doc.rect(0, ph - 18, pw, 2, 'F');
-      doc.setTextColor(148, 163, 184);
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      doc.text('SoundWave Analytics - Confidential Business Report', pw / 2, ph - 10, { align: 'center' });
-      doc.text(`Page ${p} of ${pageCount}`, pw - 14, ph - 5, { align: 'right' });
-      doc.text(format(new Date(), 'dd MMM yyyy'), 14, ph - 5);
-    }
+    drawPdfFooters(doc, 'SoundWave Analytics - Confidential Business Report');
 
     const filename = `SoundWave_Report_${preset}_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`;
     doc.save(filename);

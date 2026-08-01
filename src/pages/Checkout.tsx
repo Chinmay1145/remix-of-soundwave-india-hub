@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { recomputeCoupon } from '@/lib/coupons';
 
 const checkoutSchema = z.object({
   name: z.string().trim()
@@ -54,7 +55,7 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [coupon, setCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -98,16 +99,17 @@ const Checkout = () => {
       const raw = sessionStorage.getItem('soundwave-coupon');
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed?.code && typeof parsed?.discount === 'number' && parsed.discount > 0) {
-          setCoupon(parsed);
+        if (parsed?.code) {
+          setCouponCode(parsed.code);
         }
       }
     } catch {}
   }, []);
 
   const subtotal = getTotal();
-  const discountAmount = coupon ? Math.round((subtotal * coupon.discount) / 100) : 0;
-  const shippingFree = subtotal > 999 || coupon?.code === 'FREESHIP';
+  const couponResult = recomputeCoupon(couponCode, subtotal);
+  const discountAmount = couponResult.ok ? couponResult.discountAmount : 0;
+  const shippingFree = subtotal > 999 || (couponResult.ok && couponResult.freeShipping);
   const shipping = shippingFree ? 0 : 99;
   const codCharge = selectedPayment === 'cod' ? 49 : 0;
   const total = subtotal - discountAmount + shipping + codCharge;
@@ -457,9 +459,9 @@ const Checkout = () => {
                       <span>Subtotal</span>
                       <span>₹{subtotal.toLocaleString()}</span>
                     </div>
-                    {coupon && discountAmount > 0 && (
+                    {couponResult.ok && discountAmount > 0 && (
                       <div className="flex justify-between text-primary">
-                        <span>Coupon ({coupon.code}) -{coupon.discount}%</span>
+                        <span>Coupon ({couponResult.coupon?.code})</span>
                         <span>-₹{discountAmount.toLocaleString()}</span>
                       </div>
                     )}
