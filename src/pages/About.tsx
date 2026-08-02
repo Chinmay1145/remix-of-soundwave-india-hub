@@ -257,6 +257,57 @@ const About = () => {
         </div>
       </section>
 
+      {/* Journey Timeline */}
+      <section className="relative py-32 bg-background overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-1/4 right-0 w-[520px] h-[420px] bg-primary/10 blur-[140px] rounded-full" />
+        </div>
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mb-16"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-[2px] w-12 bg-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">The Journey</span>
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight">
+              From garage<br />to <span className="gradient-text">nationwide.</span>
+            </h2>
+          </motion.div>
+
+          <div className="relative">
+            <div className="absolute left-0 right-0 top-8 h-px bg-border hidden lg:block" />
+            <div className="grid gap-6 lg:grid-cols-4">
+              {[
+                { year: '2020', title: 'The first drop', text: 'Two friends, one Mumbai garage and 40 pairs of earbuds sold in a week.' },
+                { year: '2022', title: 'Brand partnerships', text: 'Signed 8 homegrown audio brands and launched our curation lab.' },
+                { year: '2024', title: '50,000 customers', text: 'Nationwide delivery, 24/7 support desk and a 4.8 average rating.' },
+                { year: '2026', title: 'Studio-grade for all', text: 'Expanding into pro audio while keeping prices honestly Indian.' },
+              ].map((item, index) => (
+                <motion.div
+                  key={item.year}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="relative"
+                >
+                  <div className="w-4 h-4 rounded-full bg-primary ring-8 ring-background mb-6 hidden lg:block" />
+                  <div className="p-7 rounded-3xl bg-card border border-border hover:border-primary/60 transition-colors">
+                    <div className="font-display text-3xl font-bold text-primary mb-2">{item.year}</div>
+                    <h3 className="font-display text-lg font-bold mb-2">{item.title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">{item.text}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Team Section */}
       <section className="py-32 bg-background">
         <div className="container mx-auto px-4">
