@@ -172,20 +172,46 @@ const Index = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="py-24 bg-background">
+      <section className="relative py-28 bg-background overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-1/3 -left-32 w-[520px] h-[420px] bg-primary/10 blur-[140px] rounded-full" />
+        </div>
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-14"
           >
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Shop by <span className="gradient-text">Category</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Find the perfect audio gear for your lifestyle
-            </p>
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-[2px] w-12 bg-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">
+                  Browse the range
+                </span>
+              </div>
+              <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight mb-4">
+                Shop by<br /><span className="gradient-text">Category</span>
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                Four curated lanes of sound — from pocket-sized buds to studio-grade cans.
+              </p>
+            </div>
+            <div className="flex items-center gap-8">
+              <div>
+                <div className="font-display text-4xl font-bold">
+                  {categories.reduce((s, c) => s + (c.count || 0), 0)}+
+                </div>
+                <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground mt-1">Products</div>
+              </div>
+              <div className="w-px h-12 bg-border" />
+              <Link to="/products">
+                <Button variant="outline" size="lg">
+                  Browse all
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -230,20 +256,41 @@ const Index = () => {
       </section>
 
       {/* Product Slider Section */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 mb-10">
+      <section className="relative py-24 bg-background overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute bottom-0 right-0 w-[560px] h-[420px] bg-[hsl(35_100%_55%)]/10 blur-[150px] rounded-full" />
+        </div>
+        <div className="container mx-auto px-4 mb-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center"
+            className="flex flex-col md:flex-row md:items-end justify-between gap-6"
           >
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-              Featured <span className="gradient-text">Collections</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Handpicked products from our best categories
-            </p>
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-[2px] w-12 bg-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">
+                  Curated by our audio team
+                </span>
+              </div>
+              <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight mb-4">
+                Featured<br /><span className="gradient-text">Collections</span>
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                Handpicked drops, refreshed every week — tested, ranked and approved before they land here.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {['Editor’s picks', 'New arrivals', 'Best value'].map((tag) => (
+                <span
+                  key={tag}
+                  className="px-4 py-2 rounded-full border border-border text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           </motion.div>
         </div>
         <HeroSlider />
