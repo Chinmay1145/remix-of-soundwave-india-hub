@@ -60,6 +60,7 @@ const Contact = () => {
       emailNote = 'EmailJS not configured — only the PDF receipt is available right now.';
     }
 
+    setReceiptEmailed(emailSent);
     setReceipt(data);
     toast({
       title: emailSent ? 'Message sent & receipt emailed' : 'Message sent',
