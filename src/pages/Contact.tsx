@@ -18,47 +18,16 @@ const Contact = () => {
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [receipt, setReceipt] = useState<ContactReceiptData | null>(null);
-  const [receiptEmailed, setReceiptEmailed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const data: ContactReceiptData = {
-      reference: buildReference(),
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      subject: formData.subject,
-      message: formData.message,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Give the UI a beat, then fire the email. We don't block the receipt
-    // modal on email success — the PDF download always works as a fallback.
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    let emailSent = false;
-    let emailNote = '';
-    if (isEmailConfigured()) {
-      const result = await sendContactEmail({
-        ...data,
-        replyUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
-      });
-      emailSent = result.success;
-      emailNote = result.message || '';
-    } else {
-      emailNote = 'EmailJS not configured — only the PDF receipt is available right now.';
-    }
-
-    setReceiptEmailed(emailSent);
-    setReceipt(data);
     toast({
-      title: emailSent ? 'Message sent & receipt emailed' : 'Message sent',
-      description: emailSent
-        ? `Receipt ${data.reference} emailed to ${data.email}. We reply within 24 hours.`
-        : `Receipt ${data.reference} generated. ${emailNote}`.trim(),
+      title: 'Message sent',
+      description: `Thanks, ${formData.name}! We'll get back to you within 24 hours.`,
     });
 
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
