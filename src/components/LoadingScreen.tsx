@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Headphones } from 'lucide-react';
+import { Headphones, ShieldCheck, Truck, BadgeCheck } from 'lucide-react';
 
 const LoadingScreen = () => {
   return (
@@ -14,6 +14,17 @@ const LoadingScreen = () => {
         className="absolute -bottom-32 -right-32 w-[500px] h-[500px] rounded-full bg-[hsl(35_100%_55%)]/25 blur-[120px]"
         animate={{ scale: [1.2, 1, 1.2], x: [0, -40, 0], y: [0, -30, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Rotating conic sheen */}
+      <motion.div
+        className="absolute left-1/2 top-1/2 h-[900px] w-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.12] blur-2xl"
+        style={{
+          background:
+            'conic-gradient(from 0deg, transparent 0deg, hsl(16 100% 55%) 90deg, transparent 180deg, hsl(35 100% 55%) 270deg, transparent 360deg)',
+        }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
       />
 
       {/* Grid overlay */}
@@ -67,9 +78,11 @@ const LoadingScreen = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-2 text-[10px] uppercase tracking-[0.5em] text-primary/80"
+          className="mt-3 flex items-center gap-3 text-[10px] uppercase tracking-[0.5em] text-primary/80"
         >
+          <span className="h-px w-8 bg-primary/40" />
           Premium Audio · India
+          <span className="h-px w-8 bg-primary/40" />
         </motion.div>
 
         {/* Equalizer bars */}
@@ -109,6 +122,28 @@ const LoadingScreen = () => {
         >
           Tuning your experience...
         </motion.p>
+
+        {/* Trust badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className="mt-10 flex flex-wrap items-center justify-center gap-2"
+        >
+          {[
+            { icon: ShieldCheck, label: '1-Yr Warranty' },
+            { icon: Truck, label: 'Free Shipping' },
+            { icon: BadgeCheck, label: '100% Authentic' },
+          ].map(({ icon: Icon, label }) => (
+            <span
+              key={label}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-white/70 backdrop-blur-sm"
+            >
+              <Icon className="h-3 w-3 text-primary" />
+              {label}
+            </span>
+          ))}
+        </motion.div>
       </div>
     </div>
   );
