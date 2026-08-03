@@ -1,18 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, Headphones, Sparkles, ArrowUpRight, CheckCircle2, Download, Receipt } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, Headphones, Sparkles, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import {
-  buildReference,
-  downloadContactReceipt,
-  formatReceiptDate,
-  type ContactReceiptData,
-} from '@/lib/contactReceipt';
-import { sendContactEmail, isEmailConfigured } from '@/lib/contactEmail';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -26,47 +18,16 @@ const Contact = () => {
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [receipt, setReceipt] = useState<ContactReceiptData | null>(null);
-  const [receiptEmailed, setReceiptEmailed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const data: ContactReceiptData = {
-      reference: buildReference(),
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      subject: formData.subject,
-      message: formData.message,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Give the UI a beat, then fire the email. We don't block the receipt
-    // modal on email success — the PDF download always works as a fallback.
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    let emailSent = false;
-    let emailNote = '';
-    if (isEmailConfigured()) {
-      const result = await sendContactEmail({
-        ...data,
-        replyUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
-      });
-      emailSent = result.success;
-      emailNote = result.message || '';
-    } else {
-      emailNote = 'EmailJS not configured — only the PDF receipt is available right now.';
-    }
-
-    setReceiptEmailed(emailSent);
-    setReceipt(data);
     toast({
-      title: emailSent ? 'Message sent & receipt emailed' : 'Message sent',
-      description: emailSent
-        ? `Receipt ${data.reference} emailed to ${data.email}. We reply within 24 hours.`
-        : `Receipt ${data.reference} generated. ${emailNote}`.trim(),
+      title: 'Message sent',
+      description: `Thanks, ${formData.name}! We'll get back to you within 24 hours.`,
     });
 
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
@@ -390,82 +351,6 @@ const Contact = () => {
       </section>
 
       <Footer />
-
-      {/* Official message receipt */}
-      <Dialog open={!!receipt} onOpenChange={(o) => !o && setReceipt(null)}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden border-border">
-          {receipt && (
-            <div>
-              <div
-                className="p-7 text-white relative overflow-hidden"
-                style={{ background: 'linear-gradient(135deg, hsl(16 100% 55%) 0%, hsl(35 100% 55%) 100%)' }}
-              >
-                <Receipt className="absolute -bottom-6 -right-4 w-32 h-32 text-white/10" strokeWidth={1.2} />
-                <div className="relative">
-                  <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle2 className="w-5 h-5" />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.3em]">Message received</span>
-                  </div>
-                  <h3 className="font-display text-3xl font-bold leading-tight">SoundWave</h3>
-                  <p className="text-white/85 text-sm">Customer Support Receipt</p>
-                </div>
-              </div>
-
-              <div className="p-7 space-y-5 bg-background">
-                <div className="flex items-center justify-between rounded-2xl bg-card border border-border p-4">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Reference No</div>
-                    <div className="font-display text-lg font-bold">{receipt.reference}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Received</div>
-                    <div className="text-sm font-medium">{formatReceiptDate(receipt.createdAt)}</div>
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-sm">
-                  {[
-                    ['Name', receipt.name],
-                    ['Email', receipt.email],
-                    ['Phone', receipt.phone || 'Not provided'],
-                    ['Subject', receipt.subject],
-                  ].map(([label, value]) => (
-                    <div key={label} className="flex justify-between gap-6 border-b border-dashed border-border pb-2">
-                      <span className="text-muted-foreground">{label}</span>
-                      <span className="font-medium text-right break-all">{value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="rounded-2xl bg-card border border-border p-4">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">Message</div>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{receipt.message}</p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    variant="glow"
-                    className="flex-1 font-bold uppercase tracking-wider"
-                    onClick={() => downloadContactReceipt(receipt)}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Receipt
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={() => setReceipt(null)}>
-                    Close
-                  </Button>
-                </div>
-
-                <p className="text-[11px] text-muted-foreground text-center">
-                  {receiptEmailed
-                    ? `A copy of this receipt was emailed to ${receipt.email}. Quote the reference number in any follow-up.`
-                    : `Download your receipt above. Quote the reference number in any follow-up.`}
-                </p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
