@@ -42,12 +42,29 @@ const Contact = () => {
       createdAt: new Date().toISOString(),
     };
 
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    // Give the UI a beat, then fire the email. We don't block the receipt
+    // modal on email success — the PDF download always works as a fallback.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    let emailSent = false;
+    let emailNote = '';
+    if (isEmailConfigured()) {
+      const result = await sendContactEmail({
+        ...data,
+        replyUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
+      });
+      emailSent = result.success;
+      emailNote = result.message || '';
+    } else {
+      emailNote = 'EmailJS not configured — only the PDF receipt is available right now.';
+    }
 
     setReceipt(data);
     toast({
-      title: 'Message sent',
-      description: `Receipt ${data.reference} generated. We reply within 24 hours.`,
+      title: emailSent ? 'Message sent & receipt emailed' : 'Message sent',
+      description: emailSent
+        ? `Receipt ${data.reference} emailed to ${data.email}. We reply within 24 hours.`
+        : `Receipt ${data.reference} generated. ${emailNote}`.trim(),
     });
 
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
