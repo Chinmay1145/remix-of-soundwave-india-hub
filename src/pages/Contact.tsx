@@ -12,6 +12,7 @@ import {
   formatReceiptDate,
   type ContactReceiptData,
 } from '@/lib/contactReceipt';
+import { sendContactEmail, isEmailConfigured } from '@/lib/contactEmail';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -26,6 +27,7 @@ const Contact = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receipt, setReceipt] = useState<ContactReceiptData | null>(null);
+  const [receiptEmailed, setReceiptEmailed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,12 +43,30 @@ const Contact = () => {
       createdAt: new Date().toISOString(),
     };
 
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    // Give the UI a beat, then fire the email. We don't block the receipt
+    // modal on email success — the PDF download always works as a fallback.
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
+    let emailSent = false;
+    let emailNote = '';
+    if (isEmailConfigured()) {
+      const result = await sendContactEmail({
+        ...data,
+        replyUrl: typeof window !== 'undefined' ? window.location.origin : undefined,
+      });
+      emailSent = result.success;
+      emailNote = result.message || '';
+    } else {
+      emailNote = 'EmailJS not configured — only the PDF receipt is available right now.';
+    }
+
+    setReceiptEmailed(emailSent);
     setReceipt(data);
     toast({
-      title: 'Message sent',
-      description: `Receipt ${data.reference} generated. We reply within 24 hours.`,
+      title: emailSent ? 'Message sent & receipt emailed' : 'Message sent',
+      description: emailSent
+        ? `Receipt ${data.reference} emailed to ${data.email}. We reply within 24 hours.`
+        : `Receipt ${data.reference} generated. ${emailNote}`.trim(),
     });
 
     setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
@@ -437,7 +457,9 @@ const Contact = () => {
                 </div>
 
                 <p className="text-[11px] text-muted-foreground text-center">
-                  A copy of this receipt is emailed to {receipt.email}. Quote the reference number in any follow-up.
+                  {receiptEmailed
+                    ? `A copy of this receipt was emailed to ${receipt.email}. Quote the reference number in any follow-up.`
+                    : `Download your receipt above. Quote the reference number in any follow-up.`}
                 </p>
               </div>
             </div>
