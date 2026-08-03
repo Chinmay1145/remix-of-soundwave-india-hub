@@ -1,18 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, Headphones, Sparkles, ArrowUpRight, CheckCircle2, Download, Receipt } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, Headphones, Sparkles, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import {
-  buildReference,
-  downloadContactReceipt,
-  formatReceiptDate,
-  type ContactReceiptData,
-} from '@/lib/contactReceipt';
-import { sendContactEmail, isEmailConfigured } from '@/lib/contactEmail';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
