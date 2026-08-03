@@ -12,6 +12,7 @@ import {
   formatReceiptDate,
   type ContactReceiptData,
 } from '@/lib/contactReceipt';
+import { sendContactEmail, isEmailConfigured } from '@/lib/contactEmail';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
