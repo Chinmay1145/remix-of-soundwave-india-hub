@@ -457,7 +457,9 @@ const Contact = () => {
                 </div>
 
                 <p className="text-[11px] text-muted-foreground text-center">
-                  A copy of this receipt is emailed to {receipt.email}. Quote the reference number in any follow-up.
+                  {receiptEmailed
+                    ? `A copy of this receipt was emailed to ${receipt.email}. Quote the reference number in any follow-up.`
+                    : `Download your receipt above. Quote the reference number in any follow-up.`}
                 </p>
               </div>
             </div>
