@@ -161,6 +161,12 @@ const Checkout = () => {
       return;
     }
 
+    if (!user) {
+      toast.error('Please sign in to place your order');
+      navigate('/auth');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -170,7 +176,7 @@ const Checkout = () => {
         .from('orders')
         .insert({
           order_number: orderNumber,
-          user_id: user?.id || null,
+          user_id: user.id,
           customer_name: formData.name,
           customer_email: formData.email,
           customer_phone: formData.phone,
@@ -205,15 +211,6 @@ const Checkout = () => {
         .insert(orderItems);
 
       if (itemsError) throw itemsError;
-
-      await supabase
-        .from('order_tracking')
-        .insert({
-          order_id: order.id,
-          status: 'confirmed',
-          description: 'Order has been confirmed and is being processed',
-          location: 'Warehouse',
-        });
 
       // Clear cart after successful order
       clearCart();
