@@ -12,6 +12,7 @@ import {
   TicketPercent,
   ArrowRight,
   BadgeIndianRupee,
+  ShieldCheck,
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -343,7 +344,7 @@ const Deals = () => {
                     desc: 'A curated accessory drops into every qualifying order.',
                   },
                   {
-                    icon: ShieldBadge,
+                    icon: ShieldCheck,
                     title: 'Price-drop protection',
                     desc: 'Price falls within 7 days? We refund the difference.',
                   },
