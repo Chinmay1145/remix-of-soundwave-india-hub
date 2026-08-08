@@ -1,5 +1,8 @@
 import { motion } from 'framer-motion';
-import { Headphones, Award, Target, Heart, Zap, Shield, Globe, ArrowRight, Sparkles, Play } from 'lucide-react';
+import {
+  Headphones, Award, Target, Heart, Zap, Shield, Globe, ArrowRight, Sparkles, Play,
+  BadgeCheck, RotateCcw, Users, Truck, Lock, Leaf, Recycle, PackageCheck,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -41,6 +44,23 @@ const About = () => {
     { name: 'Priya Patel', role: 'Head of Product', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop' },
     { name: 'Rahul Verma', role: 'Lead Engineer', image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop' },
     { name: 'Ananya Singh', role: 'Customer Success', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop' },
+  ];
+
+  const differentiators = [
+    { icon: BadgeCheck, title: '100% Authentic', description: 'Every product sourced directly from authorized brand partners — no grey market, ever.' },
+    { icon: Shield, title: '1-Year Warranty', description: 'Manufacturer warranty on all products, with easy claims support from our team.' },
+    { icon: RotateCcw, title: 'Easy 7-Day Returns', description: 'Changed your mind? Hassle-free returns and exchanges within 7 days of delivery.' },
+    { icon: Users, title: 'Expert Curation', description: 'Our audio nerds test every product before it earns a spot in the SoundWave catalog.' },
+    { icon: Truck, title: 'Pan-India Delivery', description: 'From metros to small towns — we ship to every pincode across the country.' },
+    { icon: Lock, title: 'Secure Payments', description: 'Bank-grade encryption on every transaction. Your money and data stay protected.' },
+  ];
+
+  const pressLogos = ['FORBES INDIA', 'YOURSTORY', 'ECONOMIC TIMES', 'GADGETS NOW', 'MINT', 'INC42'];
+
+  const sustainability = [
+    { icon: Leaf, title: 'Eco-friendly Packaging', description: 'Recyclable, minimal-waste packaging on every single order we ship.' },
+    { icon: Recycle, title: 'E-Waste Buyback', description: 'Trade in your old audio gear for credit — we recycle it responsibly.' },
+    { icon: PackageCheck, title: 'Quality Promise', description: 'Every unit is quality-checked twice before it leaves our warehouse.' },
   ];
 
   return (
@@ -213,6 +233,50 @@ const About = () => {
         </div>
       </section>
 
+      {/* In Numbers — Impact Band */}
+      <section className="relative py-24 bg-background overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-primary/10 blur-[130px] rounded-full" />
+        </div>
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mb-16"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-[2px] w-12 bg-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">In Numbers</span>
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight">
+              The <span className="gradient-text">impact</span>, quantified.
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { value: '4.8/5', label: 'Average Rating' },
+              { value: '500+', label: 'Pincodes Served' },
+              { value: '99.2%', label: 'On-Time Delivery' },
+              { value: '<24h', label: 'Support Response' },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.08 }}
+                className="p-8 rounded-3xl bg-card border border-border text-center"
+              >
+                <div className="font-display text-4xl md:text-5xl font-bold gradient-text mb-2">{stat.value}</div>
+                <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Values Section */}
       <section className="py-32 bg-card relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 blur-[120px] rounded-full" />
@@ -252,6 +316,65 @@ const About = () => {
                 <h3 className="font-display text-xl font-bold mb-3">{value.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{value.description}</p>
               </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose SoundWave */}
+      <section className="py-32 bg-background relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mb-16"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-[2px] w-12 bg-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">The Difference</span>
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight">
+              Why choose <span className="gradient-text">SoundWave.</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {differentiators.map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.06 }}
+                whileHover={{ y: -6 }}
+                className="p-8 rounded-3xl bg-card border border-border hover:border-primary transition-all"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                  <item.icon className="w-7 h-7 text-primary" />
+                </div>
+                <h3 className="font-display text-xl font-bold mb-3">{item.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Press / As Seen In */}
+      <section className="py-16 border-y border-border bg-card">
+        <div className="container mx-auto px-4">
+          <p className="text-center text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground mb-10">
+            As Seen In
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-14 gap-y-6">
+            {pressLogos.map((name) => (
+              <span
+                key={name}
+                className="font-display text-xl md:text-2xl font-bold tracking-tight text-muted-foreground/50 hover:text-primary transition-colors"
+              >
+                {name}
+              </span>
             ))}
           </div>
         </div>
@@ -418,6 +541,90 @@ const About = () => {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Sustainability & Quality Promise */}
+      <section className="py-32 bg-card relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-primary/10 blur-[130px] rounded-full" />
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl mb-16"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-[2px] w-12 bg-primary" />
+              <span className="text-xs font-bold text-primary uppercase tracking-[0.3em]">Sustainability</span>
+            </div>
+            <h2 className="font-display text-5xl md:text-7xl font-bold leading-[0.95] tracking-tight">
+              Good sound.<br /><span className="gradient-text">Good conscience.</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sustainability.map((item, index) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.08 }}
+                className="p-8 rounded-3xl bg-background border border-border"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                  <item.icon className="w-7 h-7 text-primary" />
+                </div>
+                <h3 className="font-display text-xl font-bold mb-3">{item.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Band */}
+      <section className="py-28 relative overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{ background: 'linear-gradient(135deg, hsl(16 100% 55%) 0%, hsl(35 100% 55%) 100%)' }}
+        />
+        <Headphones className="absolute -bottom-10 -right-10 w-72 h-72 text-white/10 rotate-12" strokeWidth={1} />
+        <div className="container mx-auto px-4 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-3xl"
+          >
+            <h2 className="font-display text-4xl md:text-6xl font-bold text-white leading-[1] tracking-tight mb-6">
+              Ready to hear<br />the difference?
+            </h2>
+            <p className="text-white/85 text-lg mb-10 max-w-xl">
+              Browse our curated catalog or get in touch — either way, your ears are about to thank you.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="bg-white text-primary hover:bg-white/90 font-bold h-14 px-10"
+                asChild
+              >
+                <Link to="/products">
+                  Shop the Sound <ArrowRight className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white/60 text-white hover:bg-white/10 font-bold h-14 px-10"
+                asChild
+              >
+                <Link to="/contact">Get in Touch</Link>
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
