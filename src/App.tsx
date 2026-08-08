@@ -27,6 +27,7 @@ import MyOrders from "./pages/MyOrders";
 import Deals from "./pages/Deals";
 import Profile from "./pages/Profile";
 import Reports from "./pages/Reports";
+import Collection from "./pages/Collection";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => {
               <Route path="/brands" element={<Brands />} />
               <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/deals" element={<Deals />} />
+              <Route path="/collections/:slug" element={<Collection />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="*" element={<NotFound />} />
