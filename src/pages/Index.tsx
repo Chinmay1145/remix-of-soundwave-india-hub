@@ -8,8 +8,16 @@ import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
 import CategoryCard from '@/components/CategoryCard';
 import HeroSlider from '@/components/HeroSlider';
-import { products, categories, brands } from '@/lib/products';
+import { products, categories, brands, getProductsByCategory } from '@/lib/products';
+import { collections, getCollectionProducts } from '@/lib/collections';
 import heroImage from '@/assets/hero-earbuds.jpg';
+
+const categoryTaglines: Record<string, string> = {
+  tws: 'Pocket-sized freedom',
+  neckband: 'All-day companions',
+  headphones: 'Studio-grade cans',
+  gaming: 'Low-latency battle gear',
+};
 
 const Index = () => {
   const { scrollY } = useScroll();
@@ -215,8 +223,42 @@ const Index = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categories.map((category, index) => (
-              <CategoryCard key={category.slug} {...category} index={index} />
+            {categories.map((category, index) => {
+              const inCategory = getProductsByCategory(category.slug);
+              const startingAt =
+                inCategory.length > 0
+                  ? Math.min(...inCategory.map((p) => p.price))
+                  : undefined;
+              return (
+                <CategoryCard
+                  key={category.slug}
+                  {...category}
+                  index={index}
+                  tagline={categoryTaglines[category.slug]}
+                  startingAt={startingAt}
+                />
+              );
+            })}
+          </div>
+
+          {/* Quick shop rails */}
+          <div className="mt-10 flex flex-wrap items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+              Quick shop
+            </span>
+            {[
+              { label: 'Under ₹1,499', to: '/products?max=1499' },
+              { label: 'ANC enabled', to: '/products?anc=true' },
+              { label: 'Top rated', to: '/products?sort=rating' },
+              { label: 'Big discounts', to: '/deals' },
+            ].map((chip) => (
+              <Link
+                key={chip.label}
+                to={chip.to}
+                className="rounded-full border border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              >
+                {chip.label}
+              </Link>
             ))}
           </div>
         </div>
@@ -282,16 +324,68 @@ const Index = () => {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {['Editor’s picks', 'New arrivals', 'Best value'].map((tag) => (
-                <span
-                  key={tag}
+              {collections.map((c) => (
+                <Link
+                  key={c.slug}
+                  to={`/collections/${c.slug}`}
                   className="px-4 py-2 rounded-full border border-border text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                 >
-                  {tag}
-                </span>
+                  {c.name}
+                </Link>
               ))}
             </div>
           </motion.div>
+
+          {/* Collection cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-12">
+            {collections.map((c, index) => {
+              const items = getCollectionProducts(c, 3);
+              return (
+                <motion.div
+                  key={c.slug}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.08 }}
+                >
+                  <Link
+                    to={`/collections/${c.slug}`}
+                    className={`group relative flex h-full flex-col justify-between overflow-hidden rounded-3xl border border-border bg-gradient-to-br ${c.accent} via-card to-card p-6 transition-all duration-500 hover:border-primary/60 hover:shadow-[0_24px_60px_-24px_hsl(var(--primary)/0.45)]`}
+                  >
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-primary">
+                        {c.tagline}
+                      </p>
+                      <h3 className="font-display text-2xl font-bold mt-2 mb-3 group-hover:text-primary transition-colors">
+                        {c.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-3">
+                        {c.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-between">
+                      <div className="flex -space-x-3">
+                        {items.map((p) => (
+                          <img
+                            key={p.id}
+                            src={p.image}
+                            alt={p.name}
+                            loading="lazy"
+                            className="h-10 w-10 rounded-full border-2 border-card object-cover"
+                          />
+                        ))}
+                      </div>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.15em] text-primary">
+                        Open
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
         <HeroSlider />
       </section>

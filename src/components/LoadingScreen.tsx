@@ -1,7 +1,29 @@
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Headphones, ShieldCheck, Truck, BadgeCheck } from 'lucide-react';
 
+const phrases = [
+  'Tuning your experience…',
+  'Warming up the drivers…',
+  'Calibrating the bass…',
+  'Loading today’s best deals…',
+];
+
 const LoadingScreen = () => {
+  const [progress, setProgress] = useState(0);
+  const [phrase, setPhrase] = useState(0);
+
+  useEffect(() => {
+    const p = setInterval(() => {
+      setProgress((v) => (v >= 100 ? 100 : Math.min(100, v + Math.random() * 12 + 4)));
+    }, 120);
+    const t = setInterval(() => setPhrase((i) => (i + 1) % phrases.length), 900);
+    return () => {
+      clearInterval(p);
+      clearInterval(t);
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[100] overflow-hidden bg-[hsl(220_30%_5%)] flex flex-col items-center justify-center">
       {/* Layered gradient orbs */}
@@ -104,24 +126,32 @@ const LoadingScreen = () => {
         </div>
 
         {/* Progress bar */}
-        <div className="mt-8 w-64 h-[3px] rounded-full bg-white/10 overflow-hidden">
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, hsl(16 100% 55%), hsl(35 100% 65%))' }}
-            initial={{ width: '0%' }}
-            animate={{ width: '100%' }}
-            transition={{ duration: 1.6, ease: 'easeInOut' }}
-          />
+        <div className="mt-8 w-72">
+          <div className="h-[3px] w-full rounded-full bg-white/10 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: 'linear-gradient(90deg, hsl(16 100% 55%), hsl(35 100% 65%))' }}
+              animate={{ width: `${Math.round(progress)}%` }}
+              transition={{ ease: 'easeOut', duration: 0.3 }}
+            />
+          </div>
+          <div className="mt-3 flex items-center justify-between text-[11px] tracking-wider text-white/55">
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={phrase}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.25 }}
+              >
+                {phrases[phrase]}
+              </motion.span>
+            </AnimatePresence>
+            <span className="font-display font-bold text-primary tabular-nums">
+              {Math.round(progress)}%
+            </span>
+          </div>
         </div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-          className="text-white/60 text-xs mt-4 tracking-wider"
-        >
-          Tuning your experience...
-        </motion.p>
 
         {/* Trust badges */}
         <motion.div
