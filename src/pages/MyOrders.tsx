@@ -177,27 +177,19 @@ const MyOrders = () => {
 
     setSimulatingOrderId(order.id);
     try {
-      const { error } = await supabase.from('order_tracking').insert({
-        order_id: order.id,
-        status: nextStep.status,
-        description: nextStep.description,
-        location: nextStep.location,
+      const { data, error } = await supabase.functions.invoke('advance-order-tracking', {
+        body: { order_id: order.id },
       });
       if (error) throw error;
-
-      // Refresh this order's tracking inline without full page reload
-      const { data: newTracking } = await supabase
-        .from('order_tracking')
-        .select('*')
-        .eq('order_id', order.id)
-        .order('created_at', { ascending: true });
+      const newTracking = (data as { tracking?: typeof order.tracking })?.tracking;
+      const newStatus = (data as { status?: string })?.status ?? nextStep.status;
 
       setOrders(prev => prev.map(o =>
         o.id === order.id
-          ? { ...o, order_status: nextStep.status, tracking: newTracking || o.tracking }
+          ? { ...o, order_status: newStatus, tracking: newTracking || o.tracking }
           : o
       ));
-      toast.success(`Order updated to: ${nextStep.status.replace(/_/g, ' ')}`);
+      toast.success(`Order updated to: ${newStatus.replace(/_/g, ' ')}`);
     } catch (err) {
       console.error(err);
       toast.error('Failed to update status');
